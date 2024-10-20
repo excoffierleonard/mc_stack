@@ -1,0 +1,37 @@
+services:
+  minecraft_server:
+    image: git.jisoonet.com/el/minecraft_server
+    container_name: ${MINECRAFT_SERVER_SERVICE:-minecraft_server}
+    environment:
+      JAVA_XMS: ${JAVA_XMS:-1024M}
+      JAVA_XMX: ${JAVA_XMX:-1024M}
+      MINECRAFT_VERSION: ${MINECRAFT_VERSION:-latest}
+    ports:
+      - "${SERVER_PORT:-25565}:25565"
+      - "${RCON_PORT:-25575}:25575"
+    volumes:
+      - minecraft_server:/minecraft_server/appdata
+    networks:
+      - minecraft_server
+    restart: on-failure:5
+
+  sftp_server:
+    image: git.jisoonet.com/el/sftp_server
+    container_name: ${SFTP_SERVER_SERVICE:-sftp_server}
+    environment:
+      SFTP_USER_PASSWORD: ${SFTP_USER_PASSWORD}
+    ports:
+      - "${SFTP_SERVER_PORT:-22}:22"
+    volumes:
+      - minecraft_server:/mnt/sftp_server
+    networks:
+      - minecraft_server
+    restart: on-failure:5
+
+volumes:
+  minecraft_server:
+    name: ${MINECRAFT_SERVER_VOLUME:-minecraft_server}
+
+networks:
+  minecraft_server:
+    name: ${MINECRAFT_SERVER_NETWORK:-minecraft_server}
