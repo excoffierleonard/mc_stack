@@ -25,6 +25,9 @@ fi
 # Bring down the Docker containers
 docker compose -f "$stack_compose_file" down
 
+# Remove the minecraft docker volumme
+docker volume rm "minecraft_server_${stack_id}"
+
 # Remove the server directory
 rm -rf "$stack_dir"
 
