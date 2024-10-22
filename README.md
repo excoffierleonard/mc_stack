@@ -16,15 +16,15 @@ sudo chmod +x scripts/*.sh
 
 ### Delete the stack
 ```bash
-./scripts/delete_stack.sh
+./scripts/delete_stack.sh <stack_id>
 ```
 
 ### Start the stack
 ```bash
-./scripts/start_stack.sh
+./scripts/start_stack.sh <stack_id>
 ```
 
 ### Stop the stack
 ```bash
-./scripts/stop_stack.sh
+./scripts/stop_stack.sh <stack_id>
 ```
