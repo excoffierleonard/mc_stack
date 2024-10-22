@@ -1,32 +1,32 @@
 #!/bin/bash
 
-# Set the base directory to the script's directory
-BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-STACKS_DIR="$BASE_DIR/stacks"
+# Check if the base directory is set correctly
+base_dir="$(dirname "$(realpath "$0")")/.."
+stacks_dir="$base_dir/stacks"
 
 # Function to fetch the base port values from the original .env file
 fetch_base_ports() {
-  base_server_port=$(grep '^SERVER_PORT=' "$BASE_DIR/template/.env" | cut -d '=' -f 2)
-  base_rcon_port=$(grep '^RCON_PORT=' "$BASE_DIR/template/.env" | cut -d '=' -f 2)
-  base_sftp_port=$(grep '^SFTP_SERVER_PORT=' "$BASE_DIR/template/.env" | cut -d '=' -f 2)
+  base_server_port=$(grep '^SERVER_PORT=' "$base_dir/template/.env" | cut -d '=' -f 2)
+  base_rcon_port=$(grep '^RCON_PORT=' "$base_dir/template/.env" | cut -d '=' -f 2)
+  base_sftp_port=$(grep '^SFTP_SERVER_PORT=' "$base_dir/template/.env" | cut -d '=' -f 2)
 }
 
 # Find the highest existing stack_NUMBER directory
-highest_number=$(ls -d "$STACKS_DIR/stack_"* 2>/dev/null | grep -o '[0-9]*' | sort -n | tail -1)
+highest_number=$(ls -d "$stacks_dir/stack_"* 2>/dev/null | grep -o '[0-9]*' | sort -n | tail -1)
 if [ -z "$highest_number" ]; then
   highest_number=0
 fi
 
 # Increment the number
 new_stack_id=$((highest_number + 1))
-new_stack_dir="$STACKS_DIR/stack_$new_stack_id"
+new_stack_dir="$stacks_dir/stack_$new_stack_id"
 new_stack_compose_file="$new_stack_dir/compose.yaml"
 
 # Create the new directory
 mkdir -p "$new_stack_dir"
 
 # Copy compose.yaml and .env to the new directory
-cp "$BASE_DIR/template/compose.yaml" "$BASE_DIR/template/.env" "$new_stack_dir"
+cp "$base_dir/template/compose.yaml" "$base_dir/template/.env" "$new_stack_dir"
 
 # Fetch the base port values from the original .env file
 fetch_base_ports
