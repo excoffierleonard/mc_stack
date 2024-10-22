@@ -1,24 +1,30 @@
+# Minecraft Server Stack
+
+## Getting Started
 ```bash
 git clone https://git.jisoonet.com/el/mc_stack.git && \
 cd mc_stack && \
-sudo chmod +x create_stack.
-sudo chmod +x delete_stack.sh
-sudo chmod +x start_stack.sh
-sudo chmod +x stop_stack.sh
+sudo chmod +x scripts/*.sh
 ```
 
+## Usage
+
+### Create a new stack
 ```bash
-./create_stack.sh
+./scripts/create_stack.sh
 ```
 
+### Delete the stack
 ```bash
-./delete_stack.sh
+./scripts/delete_stack.sh
 ```
 
+### Start the stack
 ```bash
-./start_stack.sh
+./scripts/start_stack.sh
 ```
 
+### Stop the stack
 ```bash
-./stop_stack.sh
+./scripts/stop_stack.sh
 ```
