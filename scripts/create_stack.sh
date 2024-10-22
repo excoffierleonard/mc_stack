@@ -56,6 +56,6 @@ echo "New SFTP_SERVER_SERVICE: sftp_server_$new_stack_id"
 docker compose -f "$new_stack_compose_file" up -d
 
 # Echo the success message
-echo "Stack $stack_id has been successfully created."
+echo "Stack $new_stack_id has been successfully created."
 
 #TODO: Maybe add a memory to the last number used because edge case where the last highest is deleted and the next one is created with the same number
