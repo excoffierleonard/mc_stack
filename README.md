@@ -3,6 +3,8 @@ git clone https://git.jisoonet.com/el/mc_stack.git && \
 cd mc_stack && \
 sudo chmod +x create_stack.
 sudo chmod +x delete_stack.sh
+sudo chmod +x start_stack.sh
+sudo chmod +x stop_stack.sh
 ```
 
 ```bash
@@ -11,4 +13,12 @@ sudo chmod +x delete_stack.sh
 
 ```bash
 ./delete_stack.sh
+```
+
+```bash
+./start_stack.sh
+```
+
+```bash
+./stop_stack.sh
 ```
