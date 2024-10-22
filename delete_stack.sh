@@ -6,25 +6,26 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-server_id=$1
-server_dir="minecraft_server_$server_id"
+stack_id=$1
+stack_dir="minecraft_server_$stack_id"
+stack_compose_file="$stack_dir/compose.yaml"
 
 # Check if the directory exists
-if [ ! -d "$server_dir" ]; then
-    echo "Directory $server_dir does not exist."
+if [ ! -d "$stack_dir" ]; then
+    echo "Error: Directory $stack_dir does not exist."
     exit 1
 fi
 
-# Navigate to the server directory
-cd "$server_dir"
+# Check if the docker-compose.yml file exists
+if [ ! -f "$stack_compose_file" ]; then
+    echo "Error: $stack_compose_file does not exist."
+    exit 1
+fi
 
-# Stop and remove the Docker containers
-docker compose down
-
-# Navigate back to the parent directory
-cd ..
+# Bring down the Docker containers
+docker compose -f "$stack_compose_file" down
 
 # Remove the server directory
-rm -rf "$server_dir"
+rm -rf "$stack_dir"
 
-echo "Minecraft server $server_id has been deleted."
+echo "Minecraft server $stack_id has been successfully deleted."
