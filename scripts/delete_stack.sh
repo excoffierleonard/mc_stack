@@ -7,7 +7,8 @@ if [ -z "$1" ]; then
 fi
 
 stack_id=$1
-stack_dir="stack_$stack_id"
+base_dir="$(dirname "$(realpath "$0")")/../stacks"
+stack_dir="$base_dir/stack_$stack_id"
 stack_compose_file="$stack_dir/compose.yaml"
 
 # Check if the directory exists
@@ -25,7 +26,7 @@ fi
 # Bring down the Docker containers
 docker compose -f "$stack_compose_file" down
 
-# Remove the minecraft docker volumme
+# Remove the minecraft docker volume
 docker volume rm "minecraft_server_${stack_id}"
 
 # Remove the server directory
