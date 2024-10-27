@@ -44,40 +44,40 @@ async function createStack() {
 
 async function deleteStack() {
     const stackId = document.getElementById("stackId").value;
-    if (!stackId) {
-        showError("Please enter a Stack ID");
+    if (!stackId || isNaN(stackId)) {
+        showError("Please enter a valid Stack ID");
         return;
     }
     
     const button = document.querySelector('button[onclick="deleteStack()"]');
     await handleButtonClick(button, async () => {
-        await executeRequest(`/api/v1/${stackId}`, "DELETE");
+        await executeRequest(`/api/v1/${parseInt(stackId)}`, "DELETE");
     });
 }
 
 async function startStack() {
     const stackId = document.getElementById("stackId").value;
-    if (!stackId) {
-        showError("Please enter a Stack ID");
+    if (!stackId || isNaN(stackId)) {
+        showError("Please enter a valid Stack ID");
         return;
     }
     
     const button = document.querySelector('button[onclick="startStack()"]');
     await handleButtonClick(button, async () => {
-        await executeRequest(`/api/v1/${stackId}`, "PUT");
+        await executeRequest(`/api/v1/${parseInt(stackId)}`, "PUT");
     });
 }
 
 async function stopStack() {
     const stackId = document.getElementById("stackId").value;
-    if (!stackId) {
-        showError("Please enter a Stack ID");
+    if (!stackId || isNaN(stackId)) {
+        showError("Please enter a valid Stack ID");
         return;
     }
     
     const button = document.querySelector('button[onclick="stopStack()"]');
     await handleButtonClick(button, async () => {
-        await executeRequest(`/api/v1/${stackId}`, "POST");
+        await executeRequest(`/api/v1/${parseInt(stackId)}`, "POST");
     });
 }
 
