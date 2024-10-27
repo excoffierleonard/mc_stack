@@ -3,7 +3,7 @@
 base_dir="$(dirname "$(realpath "$0")")/../stacks"
 wan_ip=$(wget -qO- http://ipinfo.io/ip)
 
-[ ! -d "$base_dir" ] && echo "Error: Stacks directory $base_dir does not exist." >&2 && exit 1
+[ ! -d "$base_dir" ] && echo "Stacks directory $base_dir does not exist." >&2 && exit 1
 
 # List all stack directories and sort them by stack ID
 stack_dirs=$(find "$base_dir" -maxdepth 1 -type d -name 'stack_*' | sort -t'_' -k2,2n)

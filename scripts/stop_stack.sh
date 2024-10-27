@@ -13,7 +13,7 @@ stack_compose_file="$stack_dir/compose.yaml"
 
 # Check if the stack directory exists
 if [ ! -d "$stack_dir" ]; then
-    echo "Error: Stack directory $stack_dir does not exist." >&2
+    echo "Stack directory $stack_dir does not exist." >&2
     exit 1
 fi
 

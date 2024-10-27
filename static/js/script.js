@@ -130,7 +130,7 @@ function showSuccess(message) {
 
 function showError(message) {
     const errorElement = document.getElementById("error");
-    errorElement.innerText = message;
+    errorElement.innerText = `Error: ${message}`;
     errorElement.classList.remove('hidden');
     
     // Auto-hide error message after 10 seconds

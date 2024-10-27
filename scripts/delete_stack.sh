@@ -13,13 +13,13 @@ stack_compose_file="$stack_dir/compose.yaml"
 
 # Check if the directory exists
 if [ ! -d "$stack_dir" ]; then
-    echo "Error: Directory $stack_dir does not exist." >&2
+    echo "Directory $stack_dir does not exist." >&2
     exit 1
 fi
 
 # Check if the docker-compose.yml file exists
 if [ ! -f "$stack_compose_file" ]; then
-    echo "Error: $stack_compose_file does not exist." >&2
+    echo "$stack_compose_file does not exist." >&2
     exit 1
 fi
 
