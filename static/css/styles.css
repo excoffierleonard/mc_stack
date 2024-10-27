@@ -1,0 +1,18 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+input[type="text"] {
+    width: 300px;
+    margin: 10px 0;
+}
+button {
+    margin: 5px;
+}
+#output {
+    margin-top: 20px;
+    color: green;
+}
+    .error {
+    color: red;
+}

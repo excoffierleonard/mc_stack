@@ -4,26 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Minecraft Server Manager</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 20px;
-      }
-      input[type="text"] {
-        width: 300px;
-        margin: 10px 0;
-      }
-      button {
-        margin: 5px;
-      }
-      #output {
-        margin-top: 20px;
-        color: green;
-      }
-      .error {
-        color: red;
-      }
-    </style>
+    <link rel="stylesheet" href="css/styles.css" />
   </head>
   <body>
     <h1>Minecraft Server Manager</h1>
@@ -41,43 +22,6 @@
     </div>
     <div id="output"></div>
     <div id="error" class="error"></div>
-    <script>
-      async function createStack() {
-        const response = await fetch("/api/v1/create", { method: "POST" });
-        handleResponse(response);
-      }
-      async function deleteStack() {
-        const stackId = document.getElementById("stackId").value;
-        const response = await fetch(`/api/v1/${stackId}`, { method: "DELETE" });
-        handleResponse(response);
-      }
-      async function startStack() {
-        const stackId = document.getElementById("stackId").value;
-        const response = await fetch(`/api/v1/${stackId}`, { method: "PUT" });
-        handleResponse(response);
-      }
-      async function stopStack() {
-        const stackId = document.getElementById("stackId").value;
-        const response = await fetch(`/api/v1/${stackId}`, { method: "POST" });
-        handleResponse(response);
-      }
-      async function listStacks() {
-        const response = await fetch("/api/v1/list", { method: "GET" });
-        handleResponse(response);
-      }
-      async function handleResponse(response) {
-        const outputElement = document.getElementById("output");
-        const errorElement = document.getElementById("error");
-        outputElement.innerText = ""; // Clear the output
-        errorElement.innerText = ""; // Clear previous errors
-        if (response.ok) {
-          const data = await response.json();
-          outputElement.innerText = data.message;
-        } else {
-          const errorData = await response.json().catch(() => ({ message: 'Unknown error occurred' }));
-          errorElement.innerText = `Error: ${errorData.message}`;
-        }
-      }
-    </script>
+    <script src="js/script.js"></script>
   </body>
 </html>
