@@ -1,3 +1,6 @@
 # Ignore everything in the stack dir except the .gitkeep file
 stacks/*
 !stacks/.gitkeep
+
+# Rust builds
+/target
