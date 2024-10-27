@@ -42,10 +42,6 @@ async function executeRequest(url, method) {
     // Reset display
     outputElement.classList.add('hidden');
     errorElement.classList.add('hidden');
-    
-    // Show loading state
-    const spinner = document.getElementById('createSpinner');
-    spinner.classList.remove('hidden');
 
     try {
         const response = await fetch(url, { method });
@@ -58,8 +54,6 @@ async function executeRequest(url, method) {
         }
     } catch (error) {
         showError('Failed to communicate with the server');
-    } finally {
-        spinner.classList.add('hidden');
     }
 }
 
