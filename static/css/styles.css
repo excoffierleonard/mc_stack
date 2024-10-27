@@ -1,18 +1,54 @@
-body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
+/* Animation for loading spinner */
+@keyframes spin {
+    to { 
+        transform: rotate(360deg); 
+    }
 }
-input[type="text"] {
-    width: 300px;
-    margin: 10px 0;
+
+.loading {
+    animation: spin 1s linear infinite;
 }
-button {
-    margin: 5px;
+
+/* Custom focus styles */
+.focus-visible:focus {
+    outline: 2px solid rgba(59, 130, 246, 0.5);
+    outline-offset: 2px;
 }
-#output {
-    margin-top: 20px;
-    color: green;
+
+/* Additional custom styles beyond Tailwind */
+.input-error {
+    border-color: #EF4444;
 }
-    .error {
-    color: red;
+
+/* Transitions */
+.transition-all {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+    .max-w-4xl {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .button-group {
+        flex-direction: column;
+    }
+    
+    .button-group button {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+    .animate-spin,
+    .transition-all {
+        animation: none;
+        transition: none;
+    }
 }
