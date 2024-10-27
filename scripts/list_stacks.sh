@@ -19,6 +19,9 @@ fi
 # Get all running container names
 running_containers=$(docker ps --format '{{.Names}}')
 
+# Get WAN address
+wan_address=$(wget -qO- http://ipinfo.io/ip)
+
 # Iterate over each stack directory and check its status
 for stack_dir in $stack_dirs; do
     stack_id=$(basename "$stack_dir" | cut -d'_' -f2)
@@ -47,5 +50,9 @@ for stack_dir in $stack_dirs; do
         fi
     done
 
-    echo "Stack $stack_id: SFTP server is $sftp_status, Minecraft server is $minecraft_status"
+    # Assuming default ports for SFTP and Minecraft servers
+    sftp_port=22
+    minecraft_port=25565
+
+    echo "Stack $stack_id: SFTP server is $sftp_status (Address: $wan_address:$sftp_port), Minecraft server is $minecraft_status (Address: $wan_address:$minecraft_port)"
 done
