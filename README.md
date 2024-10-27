@@ -1,6 +1,7 @@
 # Minecraft Server Stack
 
 ## Getting Started
+
 ```bash
 git clone https://git.jisoonet.com/el/mc_stack.git && \
 cd mc_stack && \
@@ -10,26 +11,31 @@ chmod +x scripts/*.sh
 ## Using the scripts directly
 
 ### Create a new stack
+
 ```bash
 ./scripts/create_stack.sh
 ```
 
 ### Delete the stack
+
 ```bash
 ./scripts/delete_stack.sh <stack_id>
 ```
 
 ### Start the stack
+
 ```bash
 ./scripts/start_stack.sh <stack_id>
 ```
 
 ### Stop the stack
+
 ```bash
 ./scripts/stop_stack.sh <stack_id>
 ```
 
 ### List the stacks
+
 ```bash
 ./scripts/list_stacks.sh
 ```
@@ -41,68 +47,88 @@ The service provides REST endpoints for managing Minecraft server stacks. All re
 ### Endpoints
 
 #### Create a New Stack
+
 ```
 POST /api/v1/create
 ```
+
 Creates a new Minecraft server stack instance.
 
 **Response:**
+
 - `200 OK`: Stack created successfully
 - Output contains the creation process details and stack identifier
 
 #### Delete a Stack
+
 ```
 DELETE /api/v1/{stack_id}
 ```
+
 Removes an existing Minecraft server stack and its associated resources.
 
 **Parameters:**
+
 - `stack_id` (path parameter): The unique identifier of the stack to delete
 
 **Response:**
+
 - `200 OK`: Stack deleted successfully
 - Output contains the deletion process details
 
 #### Start a Stack
+
 ```
 PUT /api/v1/{stack_id}
 ```
+
 Starts a stopped Minecraft server stack.
 
 **Parameters:**
+
 - `stack_id` (path parameter): The unique identifier of the stack to start
 
 **Response:**
+
 - `200 OK`: Stack started successfully
 - Output contains the startup process details
 
 #### Stop a Stack
+
 ```
 POST /api/v1/{stack_id}
 ```
+
 Stops a running Minecraft server stack.
 
 **Parameters:**
+
 - `stack_id` (path parameter): The unique identifier of the stack to stop
 
 **Response:**
+
 - `200 OK`: Stack stopped successfully
 - Output contains the shutdown process details
 
 #### List All Stacks
+
 ```
 GET /api/v1/list
 ```
+
 Retrieves a list of all available Minecraft server stacks.
 
 **Response:**
+
 - `200 OK`: List retrieved successfully
 - Output contains the list of stacks and their details
 
 #### Static Files
+
 ```
 GET /
 ```
+
 Serves static files from the `static/` directory. The default page is `index.html`.
 
 ### Example API Usage
@@ -112,24 +138,26 @@ Serves static files from the `static/` directory. The default page is `index.htm
 curl -X POST http://localhost:8080/api/v1/create
 
 # Start a specific stack
-curl -X PUT http://localhost:8080/api/v1/stack123
+curl -X PUT http://localhost:8080/api/v1/123
 
 # Stop a specific stack
-curl -X POST http://localhost:8080/api/v1/stack123
+curl -X POST http://localhost:8080/api/v1/123
 
 # Delete a specific stack
-curl -X DELETE http://localhost:8080/api/v1/stack123
+curl -X DELETE http://localhost:8080/api/v1/123
 
 # List all stacks
 curl http://localhost:8080/api/v1/list
 ```
 
 ## Dev
+
 ```bash
 cargo run
 ```
 
 ## Prod
+
 ```bash
 cargo build --release && \
 cp target/release/mc_stack ./ && \
@@ -137,9 +165,11 @@ cp target/release/mc_stack ./ && \
 ```
 
 ## Todo
+
 - Implement a backup mechanism using duplicacy
 
 ## Notes
+
 - The service runs on `0.0.0.0:8080`
 - All stack management operations are performed through shell scripts in the `scripts/` directory
 - Ensure all scripts in the `scripts/` directory are executable (`chmod +x scripts/*.sh`)
