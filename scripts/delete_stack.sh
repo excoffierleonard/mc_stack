@@ -2,7 +2,7 @@
 
 # Check if the server ID is provided
 if [ -z "$1" ]; then
-    echo "Usage: $0 <stack_id>"
+    echo "Usage: $0 <stack_id>" >&2
     exit 1
 fi
 
@@ -13,13 +13,13 @@ stack_compose_file="$stack_dir/compose.yaml"
 
 # Check if the directory exists
 if [ ! -d "$stack_dir" ]; then
-    echo "Error: Directory $stack_dir does not exist."
+    echo "Error: Directory $stack_dir does not exist." >&2
     exit 1
 fi
 
 # Check if the docker-compose.yml file exists
 if [ ! -f "$stack_compose_file" ]; then
-    echo "Error: $stack_compose_file does not exist."
+    echo "Error: $stack_compose_file does not exist." >&2
     exit 1
 fi
 

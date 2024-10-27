@@ -19,7 +19,7 @@ stack_count=$(find "$stacks_dir" -maxdepth 1 -name 'stack_*' -type d | wc -l)
 
 # Check if the maximum number of stacks is reached
 if [ "$stack_count" -ge "$MAX_STACKS" ]; then
-  echo "Maximum number of stacks ($MAX_STACKS) reached. Cannot create more stacks."
+  echo "Maximum number of stacks ($MAX_STACKS) reached. Cannot create more stacks." >&2
   exit 1
 fi
 

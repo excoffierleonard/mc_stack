@@ -2,7 +2,7 @@
 
 # Check if stack_id is provided
 if [ -z "$1" ]; then
-    echo "Usage: $0 <stack_id>"
+    echo "Usage: $0 <stack_id>" >&2
     exit 1
 fi
 
@@ -13,7 +13,7 @@ stack_compose_file="$stack_dir/compose.yaml"
 
 # Check if the stack directory exists
 if [ ! -d "$stack_dir" ]; then
-    echo "Error: Stack directory $stack_dir does not exist."
+    echo "Error: Stack directory $stack_dir does not exist." >&2
     exit 1
 fi
 
