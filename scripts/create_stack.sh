@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Constants
+MAX_STACKS=8
+
 # Check if the base directory is set correctly
 base_dir="$(dirname "$(realpath "$0")")/.."
 stacks_dir="$base_dir/stacks"
@@ -10,6 +13,15 @@ fetch_base_ports() {
   base_rcon_port=$(grep '^RCON_PORT=' "$base_dir/template/.env" | cut -d '=' -f 2)
   base_sftp_port=$(grep '^SFTP_SERVER_PORT=' "$base_dir/template/.env" | cut -d '=' -f 2)
 }
+
+# Count the number of existing stack directories
+stack_count=$(ls -d "$stacks_dir/stack_"* 2>/dev/null | wc -l)
+
+# Check if the maximum number of stacks is reached
+if [ "$stack_count" -ge "$MAX_STACKS" ]; then
+  echo "Maximum number of stacks ($MAX_STACKS) reached. Cannot create more stacks."
+  exit 1
+fi
 
 # Find the highest existing stack_NUMBER directory
 highest_number=$(ls -d "$stacks_dir/stack_"* 2>/dev/null | grep -o '[0-9]*' | sort -n | tail -1)
