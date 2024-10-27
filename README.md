@@ -42,7 +42,7 @@ The service provides REST endpoints for managing Minecraft server stacks. All re
 
 #### Create a New Stack
 ```
-POST /create
+POST /api/v1/create
 ```
 Creates a new Minecraft server stack instance.
 
@@ -52,7 +52,7 @@ Creates a new Minecraft server stack instance.
 
 #### Delete a Stack
 ```
-DELETE /{stack_id}
+DELETE /api/v1/{stack_id}
 ```
 Removes an existing Minecraft server stack and its associated resources.
 
@@ -65,7 +65,7 @@ Removes an existing Minecraft server stack and its associated resources.
 
 #### Start a Stack
 ```
-PUT /{stack_id}
+PUT /api/v1/{stack_id}
 ```
 Starts a stopped Minecraft server stack.
 
@@ -78,7 +78,7 @@ Starts a stopped Minecraft server stack.
 
 #### Stop a Stack
 ```
-POST /{stack_id}
+POST /api/v1/{stack_id}
 ```
 Stops a running Minecraft server stack.
 
@@ -91,7 +91,7 @@ Stops a running Minecraft server stack.
 
 #### List All Stacks
 ```
-GET /list
+GET /api/v1/list
 ```
 Retrieves a list of all available Minecraft server stacks.
 
@@ -109,19 +109,19 @@ Serves static files from the `static/` directory. The default page is `index.htm
 
 ```bash
 # Create a new stack
-curl -X POST http://localhost:8080/create
-
-# List all stacks
-curl http://localhost:8080/list
+curl -X POST http://localhost:8080/api/v1/create
 
 # Start a specific stack
-curl -X PUT http://localhost:8080/stack123
+curl -X PUT http://localhost:8080/api/v1/stack123
 
 # Stop a specific stack
-curl -X POST http://localhost:8080/stack123
+curl -X POST http://localhost:8080/api/v1/stack123
 
 # Delete a specific stack
-curl -X DELETE http://localhost:8080/stack123
+curl -X DELETE http://localhost:8080/api/v1/stack123
+
+# List all stacks
+curl http://localhost:8080/api/v1/list
 ```
 
 ## Dev

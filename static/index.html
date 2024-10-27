@@ -27,65 +27,55 @@
   </head>
   <body>
     <h1>Minecraft Server Manager</h1>
-
     <div>
       <button onclick="createStack()">Create Stack</button>
     </div>
     <div>
       <input type="text" id="stackId" placeholder="Enter Stack ID" />
     </div>
-
     <div>
       <button onclick="deleteStack()">Delete Stack</button>
       <button onclick="startStack()">Start Stack</button>
       <button onclick="stopStack()">Stop Stack</button>
       <button onclick="listStacks()">List Stacks</button>
     </div>
-
     <div id="output"></div>
     <div id="error" class="error"></div>
-
     <script>
       async function createStack() {
-        const response = await fetch("/create", { method: "POST" });
+        const response = await fetch("/api/v1/create", { method: "POST" });
         handleResponse(response);
       }
-
       async function deleteStack() {
         const stackId = document.getElementById("stackId").value;
-        const response = await fetch(`/${stackId}`, { method: "DELETE" });
+        const response = await fetch(`/api/v1/${stackId}`, { method: "DELETE" });
         handleResponse(response);
       }
-
       async function startStack() {
         const stackId = document.getElementById("stackId").value;
-        const response = await fetch(`/${stackId}`, { method: "PUT" });
+        const response = await fetch(`/api/v1/${stackId}`, { method: "PUT" });
         handleResponse(response);
       }
-
       async function stopStack() {
         const stackId = document.getElementById("stackId").value;
-        const response = await fetch(`/${stackId}`, { method: "POST" });
+        const response = await fetch(`/api/v1/${stackId}`, { method: "POST" });
         handleResponse(response);
       }
-
       async function listStacks() {
-        const response = await fetch("/list", { method: "GET" });
+        const response = await fetch("/api/v1/list", { method: "GET" });
         handleResponse(response);
       }
-
       async function handleResponse(response) {
         const outputElement = document.getElementById("output");
         const errorElement = document.getElementById("error");
         outputElement.innerText = ""; // Clear the output
         errorElement.innerText = ""; // Clear previous errors
-
         if (response.ok) {
-          const text = await response.text();
-          outputElement.innerText = text;
+          const data = await response.json();
+          outputElement.innerText = data.message;
         } else {
-          const errorText = await response.text();
-          errorElement.innerText = `Error: ${errorText}`;
+          const errorData = await response.json().catch(() => ({ message: 'Unknown error occurred' }));
+          errorElement.innerText = `Error: ${errorData.message}`;
         }
       }
     </script>
