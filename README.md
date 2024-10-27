@@ -158,10 +158,23 @@ cargo run
 
 ## Prod
 
+### Build
+
 ```bash
 cargo build --release && \
-cp target/release/mc_stack ./ && \
-./mc_stack
+cp target/release/mc_stack ./
+```
+
+### Run
+
+```bash
+./mc_stack &
+```
+
+### Stop
+
+```bash
+pkill mc_stack
 ```
 
 ## Todo

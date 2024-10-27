@@ -84,20 +84,4 @@ document.addEventListener('DOMContentLoaded', () => {
             e.target.classList.remove('input-error');
         }
     });
-
-    // Add keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-        if (e.ctrlKey || e.metaKey) {
-            switch(e.key) {
-                case 'l':
-                    e.preventDefault();
-                    listStacks();
-                    break;
-                case 'c':
-                    e.preventDefault();
-                    createStack();
-                    break;
-            }
-        }
-    });
 });
