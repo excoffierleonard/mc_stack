@@ -16,6 +16,9 @@ if [ -z "$stack_dirs" ]; then
     exit 0
 fi
 
+# Get all running container names
+running_containers=$(docker ps --format '{{.Names}}')
+
 # Iterate over each stack directory and check its status
 for stack_dir in $stack_dirs; do
     stack_id=$(basename "$stack_dir" | cut -d'_' -f2)
@@ -26,8 +29,23 @@ for stack_dir in $stack_dirs; do
         continue
     fi
 
-    # Check if the stack is running
-    stack_status=$(docker compose -f "$stack_compose_file" ps -q | xargs docker inspect -f '{{.State.Running}}' 2>/dev/null | grep true >/dev/null && echo "running" || echo "stopped")
+    # Check if the SFTP server container is running
+    sftp_status="stopped"
+    for container_name in $running_containers; do
+        if [[ $container_name == *"sftp_server_${stack_id}"* ]]; then
+            sftp_status="running"
+            break
+        fi
+    done
 
-    echo "Stack $stack_id: $stack_status"
+    # Check if the Minecraft server container is running
+    minecraft_status="stopped"
+    for container_name in $running_containers; do
+        if [[ $container_name == *"minecraft_server_${stack_id}"* ]]; then
+            minecraft_status="running"
+            break
+        fi
+    done
+
+    echo "Stack $stack_id: SFTP server is $sftp_status, Minecraft server is $minecraft_status"
 done
