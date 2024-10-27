@@ -39,6 +39,7 @@
       <button onclick="deleteStack()">Delete Stack</button>
       <button onclick="startStack()">Start Stack</button>
       <button onclick="stopStack()">Stop Stack</button>
+      <button onclick="listStacks()">List Stacks</button>
     </div>
 
     <div id="output"></div>
@@ -65,6 +66,11 @@
       async function stopStack() {
         const stackId = document.getElementById("stackId").value;
         const response = await fetch(`/${stackId}`, { method: "POST" });
+        handleResponse(response);
+      }
+
+      async function listStacks() {
+        const response = await fetch("/list", { method: "GET" });
         handleResponse(response);
       }
 

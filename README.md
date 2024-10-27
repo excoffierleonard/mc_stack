@@ -29,4 +29,9 @@ sudo chmod +x scripts/*.sh
 ./scripts/stop_stack.sh <stack_id>
 ```
 
+### List the stacks
+```bash
+./scripts/list_stacks.sh
+```
+
 ## Need to implement a backup mechanism using duplicacy
