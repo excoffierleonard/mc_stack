@@ -2,5 +2,6 @@
 stacks/*
 !stacks/.gitkeep
 
-# Rust builds
+# Ignore Rust builds files
 /target
+mc_stack

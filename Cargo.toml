@@ -1,5 +1,5 @@
 [package]
-name = "mccontrol"
+name = "mc_stack"
 version = "0.1.0"
 edition = "2021"
 
