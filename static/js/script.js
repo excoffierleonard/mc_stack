@@ -122,10 +122,10 @@ function showSuccess(message) {
     outputElement.innerText = message;
     outputElement.classList.remove('hidden');
     
-    // Auto-hide success message after 5 seconds
+    // Auto-hide success message after 10 seconds
     setTimeout(() => {
         outputElement.classList.add('hidden');
-    }, 5000);
+    }, 10000);
 }
 
 function showError(message) {
@@ -133,10 +133,10 @@ function showError(message) {
     errorElement.innerText = `Error: ${message}`;
     errorElement.classList.remove('hidden');
     
-    // Auto-hide error message after 5 seconds
+    // Auto-hide error message after 10 seconds
     setTimeout(() => {
         errorElement.classList.add('hidden');
-    }, 5000);
+    }, 10000);
 }
 
 // Event Listeners
