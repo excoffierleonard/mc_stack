@@ -9,24 +9,7 @@ use std::process::Command;
 
 #[derive(Serialize)]
 struct ApiResponse {
-    status: String,
     message: String,
-}
-
-impl ApiResponse {
-    fn success(message: String) -> Self {
-        Self {
-            status: "success".to_string(),
-            message,
-        }
-    }
-
-    fn error(message: String) -> Self {
-        Self {
-            status: "error".to_string(),
-            message,
-        }
-    }
 }
 
 async fn execute_script(script_name: &str, args: Option<&str>) -> Result<HttpResponse, Error> {
@@ -41,16 +24,18 @@ async fn execute_script(script_name: &str, args: Option<&str>) -> Result<HttpRes
             ))
         })?;
 
-    let response = if result.status.success() {
-        ApiResponse::success(String::from_utf8_lossy(&result.stdout).to_string())
+    if result.status.success() {
+        Ok(HttpResponse::Ok().json(ApiResponse {
+            message: String::from_utf8_lossy(&result.stdout).to_string(),
+        }))
     } else {
-        ApiResponse::error(String::from_utf8_lossy(&result.stderr).to_string())
-    };
-
-    Ok(HttpResponse::Ok().json(response))
+        Ok(HttpResponse::InternalServerError().json(ApiResponse {
+            message: String::from_utf8_lossy(&result.stderr).to_string(),
+        }))
+    }
 }
 
-// Route handlers become much simpler
+// Route handlers remain the same
 async fn create_stack() -> Result<HttpResponse, Error> {
     execute_script("create_stack", None).await
 }
