@@ -1,7 +1,7 @@
 use actix_files as fs;
 use actix_web::{
     delete,
-    error::{Error, ErrorInternalServerError},
+    error::Error,
     get,
     middleware::{Compress, Logger},
     post, put, web, App, HttpResponse, HttpServer,
@@ -16,71 +16,59 @@ struct ApiResponse {
     message: String,
 }
 
-async fn execute_script(script_name: &str, args: Option<&str>) -> Result<String, Error> {
+async fn execute_script(script_name: &str, args: Option<&str>) -> Result<HttpResponse, Error> {
     let mut command = Command::new(format!("./scripts/{}.sh", script_name));
 
     if let Some(arg) = args {
         command.arg(arg);
     }
 
-    let output = command.output().map_err(|e| {
-        ErrorInternalServerError(format!("Failed to execute {}: {}", script_name, e))
-    })?;
-
-    if output.status.success() {
-        Ok(String::from_utf8_lossy(&output.stdout).to_string())
-    } else {
-        Err(ErrorInternalServerError(
-            String::from_utf8_lossy(&output.stderr).to_string(),
-        ))
+    match command.output() {
+        Ok(output) => {
+            if output.status.success() {
+                Ok(HttpResponse::Ok().json(ApiResponse {
+                    status: "success".to_string(),
+                    message: String::from_utf8_lossy(&output.stdout).to_string(),
+                }))
+            } else {
+                Ok(HttpResponse::InternalServerError().json(ApiResponse {
+                    status: "error".to_string(),
+                    message: String::from_utf8_lossy(&output.stderr).to_string(),
+                }))
+            }
+        }
+        Err(e) => Ok(HttpResponse::InternalServerError().json(ApiResponse {
+            status: "error".to_string(),
+            message: format!("Failed to execute {}: {}", script_name, e),
+        })),
     }
 }
 
 async fn create_stack() -> Result<HttpResponse, Error> {
-    let result = execute_script("create_stack", None).await?;
-    Ok(HttpResponse::Ok().json(ApiResponse {
-        status: "success".to_string(),
-        message: result,
-    }))
+    execute_script("create_stack", None).await
 }
 
 #[delete("/{stack_id}")]
 async fn delete_stack(path: web::Path<String>) -> Result<HttpResponse, Error> {
     let stack_id = path.into_inner();
-    let result = execute_script("delete_stack", Some(&stack_id)).await?;
-    Ok(HttpResponse::Ok().json(ApiResponse {
-        status: "success".to_string(),
-        message: result,
-    }))
+    execute_script("delete_stack", Some(&stack_id)).await
 }
 
 #[put("/{stack_id}")]
 async fn start_stack(path: web::Path<String>) -> Result<HttpResponse, Error> {
     let stack_id = path.into_inner();
-    let result = execute_script("start_stack", Some(&stack_id)).await?;
-    Ok(HttpResponse::Ok().json(ApiResponse {
-        status: "success".to_string(),
-        message: result,
-    }))
+    execute_script("start_stack", Some(&stack_id)).await
 }
 
 #[post("/{stack_id}")]
 async fn stop_stack(path: web::Path<String>) -> Result<HttpResponse, Error> {
     let stack_id = path.into_inner();
-    let result = execute_script("stop_stack", Some(&stack_id)).await?;
-    Ok(HttpResponse::Ok().json(ApiResponse {
-        status: "success".to_string(),
-        message: result,
-    }))
+    execute_script("stop_stack", Some(&stack_id)).await
 }
 
 #[get("/list")]
 async fn list_stacks() -> Result<HttpResponse, Error> {
-    let result = execute_script("list_stacks", None).await?;
-    Ok(HttpResponse::Ok().json(ApiResponse {
-        status: "success".to_string(),
-        message: result,
-    }))
+    execute_script("list_stacks", None).await
 }
 
 #[actix_web::main]
