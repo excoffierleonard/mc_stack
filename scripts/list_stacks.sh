@@ -8,8 +8,8 @@ if [ ! -d "$base_dir" ]; then
     exit 1
 fi
 
-# List all stack directories
-stack_dirs=$(find "$base_dir" -maxdepth 1 -type d -name 'stack_*')
+# List all stack directories and sort them by stack ID
+stack_dirs=$(find "$base_dir" -maxdepth 1 -type d -name 'stack_*' | sort -t'_' -k2,2n)
 
 if [ -z "$stack_dirs" ]; then
     echo "No stacks found."
