@@ -15,7 +15,7 @@ fetch_base_ports() {
 }
 
 # Count the number of existing stack directories
-stack_count=$(ls -d "$stacks_dir/stack_"* 2>/dev/null | wc -l)
+stack_count=$(find "$stacks_dir" -maxdepth 1 -name 'stack_*' -type d | wc -l)
 
 # Check if the maximum number of stacks is reached
 if [ "$stack_count" -ge "$MAX_STACKS" ]; then
@@ -24,7 +24,7 @@ if [ "$stack_count" -ge "$MAX_STACKS" ]; then
 fi
 
 # Find the highest existing stack_NUMBER directory
-highest_number=$(ls -d "$stacks_dir/stack_"* 2>/dev/null | grep -o '[0-9]*' | sort -n | tail -1)
+highest_number=$(find "$stacks_dir" -maxdepth 1 -name 'stack_*' -type d | sed 's/.*stack_//' | sort -n | tail -n 1)
 if [ -z "$highest_number" ]; then
   highest_number=0
 fi
