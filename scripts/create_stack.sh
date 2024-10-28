@@ -58,16 +58,6 @@ sed -i "s/^RCON_PORT=.*/RCON_PORT=$new_rcon_port/" "$new_stack_dir/.env"
 sed -i "s/^SFTP_SERVER_PORT=.*/SFTP_SERVER_PORT=$new_sftp_port/" "$new_stack_dir/.env"
 sed -i "s/^SFTP_SERVER_SERVICE=.*/SFTP_SERVER_SERVICE=sftp_server_$new_stack_id/" "$new_stack_dir/.env"
 
-# Echo all the new static values
-echo "New directory: $new_stack_dir"
-echo "New SERVER_PORT: $new_server_port"
-echo "New RCON_PORT: $new_rcon_port"
-echo "New SFTP_SERVER_PORT: $new_sftp_port"
-echo "New MINECRAFT_SERVER_SERVICE: minecraft_server_$new_stack_id"
-echo "New MINECRAFT_SERVER_VOLUME: minecraft_server_$new_stack_id"
-echo "New MINECRAFT_SERVER_NETWORK: minecraft_server_$new_stack_id"
-echo "New SFTP_SERVER_SERVICE: sftp_server_$new_stack_id"
-
 # Start the Docker containers using docker compose -f
 docker compose -f "$new_stack_compose_file" up -d
 
