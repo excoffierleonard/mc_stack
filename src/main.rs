@@ -76,7 +76,7 @@ async fn main() -> std::io::Result<()> {
                     .service(stop_stack)
                     .service(list_stacks),
             )
-            .service(fs::Files::new("/", "static/").index_file("index.html"))
+            .service(fs::Files::new("/", "web/").index_file("index.html"))
     })
     .bind("0.0.0.0:8080")?
     .workers(2)
