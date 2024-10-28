@@ -180,6 +180,7 @@ pkill mc_stack
 ## Todo
 
 - Implement a backup mechanism using duplicacy
+- Migrate everything to rust, the static web files, and the shell scripts
 
 ## Notes
 
