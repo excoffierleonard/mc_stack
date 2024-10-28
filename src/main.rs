@@ -35,7 +35,6 @@ async fn execute_script(script_name: &str, args: Option<&str>) -> Result<HttpRes
     }
 }
 
-// Route handlers remain the same
 async fn create_stack() -> Result<HttpResponse, Error> {
     execute_script("create_stack", None).await
 }
