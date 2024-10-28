@@ -158,17 +158,12 @@ cargo run
 
 ## Prod
 
-### Build
+### Build and Run
 
 ```bash
 cargo build --release && \
-cp target/release/mc_stack ./
-```
-
-### Run
-
-```bash
-./mc_stack &
+cp target/release/mc_stack ./ && \
+nohup ./mc_stack &> output.log &
 ```
 
 ### Stop

@@ -5,3 +5,6 @@ stacks/*
 # Ignore Rust builds files
 /target
 mc_stack
+
+# Log file
+output.log
