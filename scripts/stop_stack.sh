@@ -1,28 +1,16 @@
 #!/bin/bash
 
 format_json() {
-    local msg=$1
-    printf '{"message":"%s"}\n' "$msg"
+    printf '{"message":"%s"}\n' "$1"
 }
 
-if [ -z "$1" ]; then
-    format_json "Usage: $0 <stack_id>" >&2
-    exit 1
-fi
+[ -z "$1" ] && format_json "Usage: $0 <stack_id>" >&2 && exit 1
 
 stack_id=$1
-base_dir="$(dirname "$(realpath "$0")")/../stacks"
-stack_dir="$base_dir/stack_$stack_id"
-stack_compose_file="$stack_dir/compose.yaml"
+stack_compose_file="$(dirname "$(realpath "$0")")/../stacks/stack_$stack_id/compose.yaml"
 
-if [ ! -f "$stack_compose_file" ]; then
-    format_json "Stack $stack_id does not exist" >&2
-    exit 1
-fi
+[ ! -f "$stack_compose_file" ] && format_json "Stack $stack_id does not exist" >&2 && exit 1
 
-if ! docker compose -f "$stack_compose_file" down > /dev/null 2>&1; then
-    format_json "Failed to stop stack $stack_id" >&2
-    exit 1
-fi
+docker compose -f "$stack_compose_file" down > /dev/null 2>&1 || { format_json "Failed to stop stack $stack_id" >&2; exit 1; }
 
 format_json "Stack $stack_id has been successfully stopped"
