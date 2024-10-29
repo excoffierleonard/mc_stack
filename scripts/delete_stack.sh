@@ -20,17 +20,17 @@ if [ ! -f "$stack_compose_file" ]; then
     exit 1
 fi
 
-if ! docker compose -f "$stack_compose_file" down; then
+if ! docker compose -f "$stack_compose_file" down > /dev/null 2>&1; then
     format_json "Failed to stop stack $stack_id" >&2
     exit 1
 fi
 
-if ! docker volume rm "minecraft_server_${stack_id}"; then
+if ! docker volume rm "minecraft_server_${stack_id}" > /dev/null 2>&1; then
     format_json "Failed to remove minecraft server volume" >&2
     exit 1
 fi
 
-if ! rm -rf "$stack_dir"; then
+if ! rm -rf "$stack_dir" > /dev/null 2>&1; then
     format_json "Failed to remove stack directory" >&2
     exit 1
 fi

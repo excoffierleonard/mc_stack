@@ -20,7 +20,7 @@ if [ ! -f "$stack_compose_file" ]; then
     exit 1
 fi
 
-if ! docker compose -f "$stack_compose_file" up -d; then
+if ! docker compose -f "$stack_compose_file" up -d > /dev/null 2>&1; then
     format_json "Failed to start stack $stack_id" >&2
     exit 1
 fi
