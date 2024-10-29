@@ -1,8 +1,12 @@
 #!/bin/bash
 
-# Check if the server ID is provided
+format_json() {
+    local msg=$1
+    printf '{"message":"%s"}\n' "$msg"
+}
+
 if [ -z "$1" ]; then
-    echo "Usage: $0 <stack_id>" >&2
+    format_json "Usage: $0 <stack_id>" >&2
     exit 1
 fi
 
@@ -11,25 +15,24 @@ base_dir="$(dirname "$(realpath "$0")")/../stacks"
 stack_dir="$base_dir/stack_$stack_id"
 stack_compose_file="$stack_dir/compose.yaml"
 
-# Check if the directory exists
-if [ ! -d "$stack_dir" ]; then
-    echo "Directory $stack_dir does not exist." >&2
-    exit 1
-fi
-
-# Check if the docker-compose.yml file exists
 if [ ! -f "$stack_compose_file" ]; then
-    echo "$stack_compose_file does not exist." >&2
+    format_json "Stack $stack_id does not exist" >&2
     exit 1
 fi
 
-# Bring down the Docker containers
-docker compose -f "$stack_compose_file" down
+if ! docker compose -f "$stack_compose_file" down; then
+    format_json "Failed to stop stack $stack_id" >&2
+    exit 1
+fi
 
-# Remove the minecraft docker volume
-docker volume rm "minecraft_server_${stack_id}"
+if ! docker volume rm "minecraft_server_${stack_id}"; then
+    format_json "Failed to remove minecraft server volume" >&2
+    exit 1
+fi
 
-# Remove the server directory
-rm -rf "$stack_dir"
+if ! rm -rf "$stack_dir"; then
+    format_json "Failed to remove stack directory" >&2
+    exit 1
+fi
 
-echo "Stack $stack_id has been successfully deleted."
+format_json "Stack $stack_id has been successfully deleted"
