@@ -63,11 +63,11 @@ while IFS= read -r compose_file; do
     stack_json="{
         \"stack_id\": \"$stack_id\",
         \"services\": {
-            \"sftp\": {
+            \"sftp_server\": {
                 \"status\": \"$sftp_status\"
                 $([ -n "$sftp_port" ] && echo ", \"port\": \"$sftp_port\"")
             },
-            \"minecraft\": {
+            \"minecraft_server\": {
                 \"status\": \"$minecraft_status\"
                 $([ -n "$minecraft_port" ] && echo ", \"port\": \"$minecraft_port\"")
             }
