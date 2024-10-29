@@ -4,13 +4,7 @@ use actix_web::{
     post, put, web, App, HttpResponse, HttpServer,
 };
 use env_logger::Env;
-use serde::Serialize;
 use std::process::Command;
-
-#[derive(Serialize)]
-struct ApiResponse {
-    message: String,
-}
 
 async fn execute_script(script_name: &str, args: Option<&str>) -> Result<HttpResponse, Error> {
     let script_path = format!("./scripts/{}.sh", script_name);
@@ -25,13 +19,13 @@ async fn execute_script(script_name: &str, args: Option<&str>) -> Result<HttpRes
         })?;
 
     if result.status.success() {
-        Ok(HttpResponse::Ok().json(ApiResponse {
-            message: String::from_utf8_lossy(&result.stdout).to_string(),
-        }))
+        Ok(HttpResponse::Ok()
+            .content_type("application/json")
+            .body(result.stdout))
     } else {
-        Ok(HttpResponse::InternalServerError().json(ApiResponse {
-            message: String::from_utf8_lossy(&result.stderr).to_string(),
-        }))
+        Ok(HttpResponse::InternalServerError()
+            .content_type("application/json")
+            .body(result.stderr))
     }
 }
 
