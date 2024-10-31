@@ -40,30 +40,22 @@ template_env="$template_dir/.env"
 [ ! -f "$template_env" ] && format_error "Template .env file not found"
 [ ! -f "$template_dir/compose.yaml" ] && format_error "Template compose.yaml not found"
 
-# Count existing stacks based on compose files as source of truth
-stack_count=$(find "$stacks_dir" -name "compose.yaml" -type f | wc -l)
+# Count existing stacks and check against maximum
+stack_count=$(find "$stacks_dir" -maxdepth 1 -name 'stack_*' -type d | wc -l)
 [ "$stack_count" -ge "$MAX_STACKS" ] && format_error "Maximum number of stacks ($MAX_STACKS) reached"
+
+# Find the highest existing stack number
+highest_number=$(find "$stacks_dir" -maxdepth 1 -name 'stack_*' -type d | sed 's/.*stack_//' | sort -n | tail -n 1)
+[ -z "$highest_number" ] && highest_number=0
+
+# Calculate new stack ID
+new_stack_id=$((highest_number + 1))
+new_stack_dir="$stacks_dir/stack_$new_stack_id"
 
 # Get base ports from template
 base_server_port=$(grep '^SERVER_PORT=' "$template_env" | cut -d '=' -f 2)
 base_rcon_port=$(grep '^RCON_PORT=' "$template_env" | cut -d '=' -f 2)
 base_sftp_port=$(grep '^SFTP_SERVER_PORT=' "$template_env" | cut -d '=' -f 2)
-
-# Find next available stack ID
-declare -A used_ids
-for dir in "$stacks_dir"/stack_*/; do
-    [[ -f "$dir/compose.yaml" ]] && used_ids[${dir#*stack_}]=1
-done
-
-new_stack_id=1
-while [ ${used_ids[$new_stack_id]} ]; do
-    ((new_stack_id++))
-    [ "$new_stack_id" -gt "$MAX_STACKS" ] && format_error "No available stack IDs"
-done
-
-# Setup new stack
-new_stack_dir="$stacks_dir/stack_$new_stack_id"
-new_stack_env="$new_stack_dir/.env"
 
 # Calculate new ports
 new_server_port=$((base_server_port + new_stack_id * INCREMENT))
@@ -83,7 +75,7 @@ sed -i \
     -e "s/^RCON_PORT=.*/RCON_PORT=$new_rcon_port/" \
     -e "s/^SFTP_SERVER_PORT=.*/SFTP_SERVER_PORT=$new_sftp_port/" \
     -e "s/^SFTP_SERVER_SERVICE=.*/SFTP_SERVER_SERVICE=sftp_server_$new_stack_id/" \
-    "$new_stack_env" || format_error "Failed to update .env file"
+    "$new_stack_dir/.env" || format_error "Failed to update .env file"
 
 # Start the containers
 if ! docker compose -f "$new_stack_dir/compose.yaml" up -d; then
