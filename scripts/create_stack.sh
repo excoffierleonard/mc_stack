@@ -25,8 +25,7 @@ EOF
 }
 
 format_error() {
-    local msg=$1
-    echo "{\"message\": \"$msg\", \"error\": true}" >&2
+    echo "{\"message\": \"$1\"}" >&2
     exit 1
 }
 

@@ -5,7 +5,7 @@ format_json() {
 }
 
 format_error() {
-    echo "{\"message\": \"$1\", \"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"}" >&2
+    echo "{\"message\": \"$1\"}" >&2
     exit 1
 }
 

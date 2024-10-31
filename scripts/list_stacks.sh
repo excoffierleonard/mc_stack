@@ -16,8 +16,7 @@ EOF
 }
 
 format_error() {
-    local msg=$1
-    echo "{\"message\": \"$msg\", \"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"}" >&2
+    echo "{\"message\": \"$1\"}" >&2
     exit 1
 }
 
