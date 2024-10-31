@@ -5,7 +5,8 @@ format_json() {
 }
 
 format_error() {
-    echo "{\"message\": \"$1\"}" >&2
+    local msg=$1
+    echo "{\"message\": \"$msg\"}" >&2
     exit 1
 }
 
