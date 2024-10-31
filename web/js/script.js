@@ -35,14 +35,14 @@ const setButtonState = (button, isLoading) => {
 };
 
 // Create server card HTML
-const createServerCard = (stack) => {
+const createServerCard = (stack, wan_ip) => {
     const mcStatus = stack.services.minecraft_server;
     const sftpStatus = stack.services.sftp_server;
     
     return `
         <div class="bg-gray-50 rounded-lg p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div class="space-y-2">
-                <div class="font-semibold text-gray-800">Stack ${stack.stack_id}</div>
+                <div class="font-semibold text-gray-800">Stack ${stack.stack_id} <span class="text-gray-500 text-sm ml-2">IP: ${wan_ip || 'Not available'}</span></div>
                 <div class="text-sm text-gray-600">
                     <div>Minecraft Server: ${mcStatus.status} ${mcStatus.port ? `(Port: ${mcStatus.port})` : ''}</div>
                     <div>SFTP Server: ${sftpStatus.status} ${sftpStatus.port ? `(Port: ${sftpStatus.port})` : ''}</div>
@@ -85,7 +85,7 @@ const updateServerList = (data) => {
         serverList.innerHTML = '<div class="text-gray-500 text-center py-8">No servers available</div>';
         return;
     }
-    serverList.innerHTML = data.data.stacks.map(createServerCard).join('');
+    serverList.innerHTML = data.data.stacks.map(stack => createServerCard(stack, data.data.wan_ip)).join('');
 };
 
 // API request handler
