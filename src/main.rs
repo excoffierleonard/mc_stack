@@ -5,6 +5,7 @@ use actix_web::{
 };
 use env_logger::Env;
 use std::process::Command;
+use num_cpus;
 
 async fn execute_script(script_name: &str, args: Option<&str>) -> Result<HttpResponse, Error> {
     let script_path = format!("./scripts/{}.sh", script_name);
@@ -69,6 +70,8 @@ async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(Env::default().default_filter_or("info"));
     log::info!("Starting server at http://0.0.0.0:8080");
 
+    let num_workers = num_cpus::get();
+
     HttpServer::new(|| {
         App::new()
             .wrap(Compress::default())
@@ -84,7 +87,7 @@ async fn main() -> std::io::Result<()> {
             .service(fs::Files::new("/", "web/").index_file("index.html"))
     })
     .bind("0.0.0.0:8080")?
-    .workers(2)
+    .workers(num_workers)
     .run()
     .await
 }
