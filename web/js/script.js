@@ -1,11 +1,24 @@
 // Constants for configuration
 const CONFIG = {
-    AUTO_HIDE_DELAY: 10000,
+    AUTO_HIDE_DELAY: 5000,
     ENDPOINTS: {
         CREATE: '/api/v1/create',
         LIST: '/api/v1/list',
         STACK: (id) => `/api/v1/${id}`,
+    },
+    STATUS_CLASSES: {
+        success: 'bg-green-50 text-green-700',
+        error: 'bg-red-50 text-red-700'
     }
+};
+
+// Show status message
+const showStatus = (message, type = 'success') => {
+    const statusElement = document.getElementById('statusMessage');
+    statusElement.textContent = message;
+    statusElement.className = `rounded-lg p-4 ${CONFIG.STATUS_CLASSES[type]}`;
+    statusElement.classList.remove('hidden');
+    setTimeout(() => statusElement.classList.add('hidden'), CONFIG.AUTO_HIDE_DELAY);
 };
 
 // Button state management
@@ -21,44 +34,127 @@ const setButtonState = (button, isLoading) => {
     textSpan.classList.toggle('opacity-0', isLoading);
 };
 
+// Create server card HTML
+const createServerCard = (stack) => {
+    const mcStatus = stack.services.minecraft_server;
+    const sftpStatus = stack.services.sftp_server;
+    
+    return `
+        <div class="bg-gray-50 rounded-lg p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="space-y-2">
+                <div class="font-semibold text-gray-800">Stack ${stack.stack_id}</div>
+                <div class="text-sm text-gray-600">
+                    <div>Minecraft Server: ${mcStatus.status} ${mcStatus.port ? `(Port: ${mcStatus.port})` : ''}</div>
+                    <div>SFTP Server: ${sftpStatus.status} ${sftpStatus.port ? `(Port: ${sftpStatus.port})` : ''}</div>
+                </div>
+            </div>
+            <div class="flex gap-2 w-full sm:w-auto">
+                ${mcStatus.status === 'stopped' ? `
+                    <button
+                        onclick="startStack(${stack.stack_id})"
+                        class="btn-action bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 flex-1 sm:flex-none"
+                    >
+                        <span class="btn-text">Start</span>
+                        <div class="spinner hidden"></div>
+                    </button>
+                ` : `
+                    <button
+                        onclick="stopStack(${stack.stack_id})"
+                        class="btn-action bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 flex-1 sm:flex-none"
+                    >
+                        <span class="btn-text">Stop</span>
+                        <div class="spinner hidden"></div>
+                    </button>
+                `}
+                <button
+                    onclick="deleteStack(${stack.stack_id})"
+                    class="btn-action bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 flex-1 sm:flex-none"
+                >
+                    <span class="btn-text">Delete</span>
+                    <div class="spinner hidden"></div>
+                </button>
+            </div>
+        </div>
+    `;
+};
+
+// Update server list
+const updateServerList = (data) => {
+    const serverList = document.getElementById('serverList');
+    if (data.data.stacks.length === 0) {
+        serverList.innerHTML = '<div class="text-gray-500 text-center py-8">No servers available</div>';
+        return;
+    }
+    serverList.innerHTML = data.data.stacks.map(createServerCard).join('');
+};
+
 // API request handler
 async function executeRequest(url, method, buttonElement) {
-    if (!buttonElement) return;
-    
-    const outputElement = document.getElementById("output");
-    const errorElement = document.getElementById("error");
-    
-    [outputElement, errorElement].forEach(el => el.classList.add('hidden'));
     setButtonState(buttonElement, true);
 
     try {
         const response = await fetch(url, { method });
-        const data = await response.text();
-        const element = response.ok ? outputElement : errorElement;
-        element.innerText = data;
-        element.classList.remove('hidden');
-        setTimeout(() => element.classList.add('hidden'), CONFIG.AUTO_HIDE_DELAY);
+        const data = await response.json();
+        
+        if (response.ok) {
+            showStatus(data.message, 'success');
+            if (method !== 'GET') {
+                refreshServerList();
+            }
+            return data;
+        } else {
+            showStatus(data.message, 'error');
+        }
+    } catch (error) {
+        showStatus('An error occurred while processing your request', 'error');
     } finally {
         setButtonState(buttonElement, false);
     }
 }
 
 // Stack operations
-function createStack() {
-    executeRequest(CONFIG.ENDPOINTS.CREATE, "POST", 
-        document.querySelector('button[onclick="createStack()"]'));
+async function createStack() {
+    await executeRequest(
+        CONFIG.ENDPOINTS.CREATE,
+        'POST',
+        document.querySelector('button[onclick="createStack()"]')
+    );
 }
 
-function handleStackOperation(operation, method) {
-    const stackId = document.getElementById("stackId").value;
-    if (!stackId || isNaN(stackId) || parseInt(stackId) <= 0) return;
+async function refreshServerList() {
+    const data = await executeRequest(
+        CONFIG.ENDPOINTS.LIST,
+        'GET',
+        document.querySelector('button[onclick="refreshServerList()"]')
+    );
+    if (data) updateServerList(data);
+}
+
+async function startStack(id) {
+    await executeRequest(
+        CONFIG.ENDPOINTS.STACK(id),
+        'PUT',
+        document.querySelector(`button[onclick="startStack(${id})"]`)
+    );
+}
+
+async function stopStack(id) {
+    await executeRequest(
+        CONFIG.ENDPOINTS.STACK(id),
+        'POST',
+        document.querySelector(`button[onclick="stopStack(${id})"]`)
+    );
+}
+
+async function deleteStack(id) {
+    if (!confirm('Are you sure you want to delete this stack? This action cannot be undone.')) return;
     
-    executeRequest(CONFIG.ENDPOINTS.STACK(parseInt(stackId)), method,
-        document.querySelector(`button[onclick="${operation}()"]`));
+    await executeRequest(
+        CONFIG.ENDPOINTS.STACK(id),
+        'DELETE',
+        document.querySelector(`button[onclick="deleteStack(${id})"]`)
+    );
 }
 
-const deleteStack = () => handleStackOperation('deleteStack', 'DELETE');
-const startStack = () => handleStackOperation('startStack', 'PUT');
-const stopStack = () => handleStackOperation('stopStack', 'POST');
-const listStacks = () => executeRequest(CONFIG.ENDPOINTS.LIST, "GET",
-    document.querySelector('button[onclick="listStacks()"]'));
+// Initial load
+document.addEventListener('DOMContentLoaded', refreshServerList);

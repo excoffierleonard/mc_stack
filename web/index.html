@@ -24,74 +24,37 @@
       <div class="bg-white rounded-lg shadow-lg p-6 space-y-6">
         <!-- Create Stack Section -->
         <div class="border-b pb-6">
-          <h2 class="text-xl font-semibold text-gray-700 mb-4">
-            Create New Server
-          </h2>
+          <h2 class="text-xl font-semibold text-gray-700 mb-4">Create New Server</h2>
           <button
             onclick="createStack()"
-            class="btn-action bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 flex-1 sm:flex-none"
+            class="btn-action bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
           >
             <span class="btn-text">Create New Stack</span>
             <div class="spinner hidden"></div>
           </button>
         </div>
 
-        <!-- Stack Management Section -->
+        <!-- Server List Section -->
         <div class="space-y-4">
-          <h2 class="text-xl font-semibold text-gray-700">Manage Server</h2>
-
-          <div class="flex flex-col sm:flex-row gap-4">
-            <input
-              type="text"
-              id="stackId"
-              placeholder="Enter Stack ID"
-              class="flex-1 rounded-lg border-gray-300 border p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-            />
+          <div class="flex justify-between items-center">
+            <h2 class="text-xl font-semibold text-gray-700">Active Servers</h2>
             <button
-              onclick="listStacks()"
+              onclick="refreshServerList()"
               class="btn-action bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
             >
-              <span class="btn-text">List Stacks</span>
+              <span class="btn-text">Refresh List</span>
               <div class="spinner hidden"></div>
             </button>
           </div>
 
-          <div class="flex flex-wrap gap-2">
-            <button
-              onclick="startStack()"
-              class="btn-action bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 flex-1 sm:flex-none"
-            >
-              <span class="btn-text">Start Stack</span>
-              <div class="spinner hidden"></div>
-            </button>
-            <button
-              onclick="stopStack()"
-              class="btn-action bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 flex-1 sm:flex-none"
-            >
-              <span class="btn-text">Stop Stack</span>
-              <div class="spinner hidden"></div>
-            </button>
-            <button
-              onclick="deleteStack()"
-              class="btn-action bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 flex-1 sm:flex-none"
-            >
-              <span class="btn-text">Delete Stack</span>
-              <div class="spinner hidden"></div>
-            </button>
+          <!-- Server List -->
+          <div id="serverList" class="space-y-4">
+            <!-- Servers will be populated here -->
           </div>
         </div>
 
-        <!-- Output Section -->
-        <div class="mt-6 space-y-4">
-          <div
-            id="output"
-            class="p-4 bg-green-50 rounded-lg text-green-700 hidden"
-          ></div>
-          <div
-            id="error"
-            class="p-4 bg-red-50 rounded-lg text-red-700 hidden"
-          ></div>
-        </div>
+        <!-- Status Messages -->
+        <div id="statusMessage" class="hidden rounded-lg p-4"></div>
       </div>
     </div>
 
