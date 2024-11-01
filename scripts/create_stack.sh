@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # Constants
-MAX_STACKS=8
 INCREMENT=3
 
 format_json() {
@@ -40,6 +39,9 @@ template_env="$template_dir/.env"
 [ ! -d "$stacks_dir" ] && format_error "Stacks directory does not exist"
 [ ! -f "$template_env" ] && format_error "Template .env file not found"
 [ ! -f "$template_dir/compose.yaml" ] && format_error "Template compose.yaml not found"
+
+# Get the number of available processing units
+MAX_STACKS=$(nproc)
 
 # Count existing stacks and check against maximum
 stack_count=$(find "$stacks_dir" -maxdepth 1 -name 'stack_*' -type d | wc -l)
