@@ -1,13 +1,15 @@
 use actix_web::{post, Error, HttpResponse, ResponseError};
 use serde_json::json;
-use std::path::{Path, PathBuf};
-use std::fs;
+use std::path::PathBuf;
 use std::fmt;
 use tokio::process::Command;
 use regex::Regex;
 use num_cpus;
+use std::fs;
 
 const INCREMENT: i32 = 3;
+const ENV_TEMPLATE: &str = include_str!("../../template/.env");
+const COMPOSE_TEMPLATE: &str = include_str!("../../template/compose.yaml");
 
 #[derive(Debug)]
 enum CreateStackError {
@@ -43,45 +45,20 @@ impl ResponseError for CreateStackError {
     }
 }
 
-// Rest of the code remains the same but now you can use ? operator directly
 struct EnvConfig {
     server_port: i32,
     rcon_port: i32,
     sftp_port: i32,
 }
 
-async fn get_base_directories() -> Result<(PathBuf, PathBuf), CreateStackError> {
-    let current_exe = std::env::current_exe()
-        .map_err(|e| CreateStackError::FileSystemError(format!("Failed to get current path: {}", e)))?;
-    
-    let base_dir = current_exe
-        .parent()
-        .ok_or_else(|| CreateStackError::FileSystemError("Failed to find executable directory".to_string()))?;
-
-    let stacks_dir = base_dir.join("stacks");
-    let template_dir = base_dir.join("template");
-
-    if !stacks_dir.exists() {
-        return Err(CreateStackError::ValidationError("Stacks directory does not exist".to_string()));
-    }
-    if !template_dir.exists() || !template_dir.join(".env").exists() || !template_dir.join("compose.yaml").exists() {
-        return Err(CreateStackError::ValidationError("Template files not found".to_string()));
-    }
-
-    Ok((stacks_dir, template_dir))
-}
-
-fn parse_env_file(env_path: &Path) -> Result<EnvConfig, CreateStackError> {
-    let content = fs::read_to_string(env_path)
-        .map_err(|e| CreateStackError::FileSystemError(format!("Failed to read env file: {}", e)))?;
-
+fn parse_env_template() -> Result<EnvConfig, CreateStackError> {
     let get_port = |var_name: &str| -> Result<i32, CreateStackError> {
         let re = Regex::new(&format!(r"^{}=(\d+)", var_name)).unwrap();
-        content
+        ENV_TEMPLATE
             .lines()
             .find_map(|line| re.captures(line))
             .and_then(|cap| cap[1].parse().ok())
-            .ok_or_else(|| CreateStackError::ValidationError(format!("{} not found in env file", var_name)))
+            .ok_or_else(|| CreateStackError::ValidationError(format!("{} not found in env template", var_name)))
     };
 
     Ok(EnvConfig {
@@ -91,8 +68,25 @@ fn parse_env_file(env_path: &Path) -> Result<EnvConfig, CreateStackError> {
     })
 }
 
+async fn get_stacks_directory() -> Result<PathBuf, CreateStackError> {
+    let current_exe = std::env::current_exe()
+        .map_err(|e| CreateStackError::FileSystemError(format!("Failed to get current path: {}", e)))?;
+    
+    let stacks_dir = current_exe
+        .parent()
+        .ok_or_else(|| CreateStackError::FileSystemError("Failed to find executable directory".to_string()))?
+        .join("stacks");
+
+    if !stacks_dir.exists() {
+        fs::create_dir_all(&stacks_dir)
+            .map_err(|e| CreateStackError::FileSystemError(format!("Failed to create stacks directory: {}", e)))?;
+    }
+
+    Ok(stacks_dir)
+}
+
 async fn create_stack_impl() -> Result<HttpResponse, Error> {
-    let (stacks_dir, template_dir) = get_base_directories().await?;
+    let stacks_dir = get_stacks_directory().await?;
 
     // Check maximum stacks limit
     let max_stacks = num_cpus::get();
@@ -123,33 +117,21 @@ async fn create_stack_impl() -> Result<HttpResponse, Error> {
         }
     }
 
-    // Rest of the implementation remains the same but now you can use ? operator directly
     let new_stack_id = highest_number + 1;
     let new_stack_dir = stacks_dir.join(format!("stack_{}", new_stack_id));
 
-    let env_config = parse_env_file(&template_dir.join(".env"))?;
+    let env_config = parse_env_template()?;
     
     let new_server_port = env_config.server_port + new_stack_id * INCREMENT;
     let new_rcon_port = env_config.rcon_port + new_stack_id * INCREMENT;
     let new_sftp_port = env_config.sftp_port + new_stack_id * INCREMENT;
 
-    // Create new stack directory and copy files
+    // Create new stack directory
     fs::create_dir_all(&new_stack_dir)
         .map_err(|e| CreateStackError::FileSystemError(format!("Failed to create stack directory: {}", e)))?;
 
-    for file in &["compose.yaml", ".env"] {
-        fs::copy(
-            template_dir.join(file),
-            new_stack_dir.join(file),
-        ).map_err(|e| CreateStackError::FileSystemError(format!("Failed to copy {}: {}", file, e)))?;
-    }
-
-    // Update .env file with correct values
-    let env_path = new_stack_dir.join(".env");
-    let content = fs::read_to_string(&env_path)
-        .map_err(|e| CreateStackError::FileSystemError(format!("Failed to read .env file: {}", e)))?;
-
-    let new_content = content.lines().map(|line| {
+    // Create env file with updated values
+    let new_content = ENV_TEMPLATE.lines().map(|line| {
         if line.starts_with('#') || line.trim().is_empty() {
             line.to_string()
         } else {
@@ -170,8 +152,12 @@ async fn create_stack_impl() -> Result<HttpResponse, Error> {
         }
     }).collect::<Vec<String>>().join("\n");
 
-    fs::write(&env_path, new_content)
-        .map_err(|e| CreateStackError::FileSystemError(format!("Failed to update .env file: {}", e)))?;
+    // Write files
+    fs::write(new_stack_dir.join(".env"), new_content)
+        .map_err(|e| CreateStackError::FileSystemError(format!("Failed to write .env file: {}", e)))?;
+    
+    fs::write(new_stack_dir.join("compose.yaml"), COMPOSE_TEMPLATE)
+        .map_err(|e| CreateStackError::FileSystemError(format!("Failed to write compose.yaml: {}", e)))?;
 
     // Start the containers
     let output = Command::new("docker")
