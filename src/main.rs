@@ -1,69 +1,13 @@
 use actix_files as fs;
 use actix_web::{
-    delete, error::Error, get, middleware::{Compress, Logger},
-    post, put, web, App, HttpResponse, HttpServer,
+    middleware::{Compress, Logger},
+    web, App, HttpServer,
 };
 use env_logger::Env;
-use std::process::Command;
 use num_cpus;
 
-async fn execute_script(script_name: &str, args: Option<&str>) -> Result<HttpResponse, Error> {
-    let script_path = format!("./scripts/{}.sh", script_name);
-    let result = Command::new(&script_path)
-        .args(args)
-        .output()
-        .map_err(|e| {
-            actix_web::error::ErrorInternalServerError(format!(
-                "Failed to execute {}: {}", 
-                script_name, e
-            ))
-        })?;
-
-    // Safely convert output to UTF-8 strings
-    if result.status.success() {
-        let output = String::from_utf8(result.stdout)
-            .map_err(|e| actix_web::error::ErrorInternalServerError(format!(
-                "Invalid UTF-8 in stdout: {}", e
-            )))?;
-        
-        Ok(HttpResponse::Ok()
-            .content_type("application/json")
-            .body(output))
-    } else {
-        let error = String::from_utf8(result.stderr)
-            .map_err(|e| actix_web::error::ErrorInternalServerError(format!(
-                "Invalid UTF-8 in stderr: {}", e
-            )))?;
-        
-        Ok(HttpResponse::InternalServerError()
-            .content_type("application/json")
-            .body(error))
-    }
-}
-
-async fn create_stack() -> Result<HttpResponse, Error> {
-    execute_script("create_stack", None).await
-}
-
-#[delete("/{stack_id}")]
-async fn delete_stack(stack_id: web::Path<String>) -> Result<HttpResponse, Error> {
-    execute_script("delete_stack", Some(&stack_id)).await
-}
-
-#[put("/{stack_id}")]
-async fn start_stack(stack_id: web::Path<String>) -> Result<HttpResponse, Error> {
-    execute_script("start_stack", Some(&stack_id)).await
-}
-
-#[post("/{stack_id}")]
-async fn stop_stack(stack_id: web::Path<String>) -> Result<HttpResponse, Error> {
-    execute_script("stop_stack", Some(&stack_id)).await
-}
-
-#[get("/list")]
-async fn list_stacks() -> Result<HttpResponse, Error> {
-    execute_script("list_stacks", None).await
-}
+mod routes;
+mod utils;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -78,11 +22,11 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::default())
             .service(
                 web::scope("/api/v1")
-                    .service(web::resource("/create").route(web::post().to(create_stack)))
-                    .service(delete_stack)
-                    .service(start_stack)
-                    .service(stop_stack)
-                    .service(list_stacks),
+                    .service(routes::create::create_stack)
+                    .service(routes::delete::delete_stack)
+                    .service(routes::start::start_stack)
+                    .service(routes::stop::stop_stack)
+                    .service(routes::list::list_stacks),
             )
             .service(fs::Files::new("/", "web/").index_file("index.html"))
     })
