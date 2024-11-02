@@ -7,7 +7,6 @@ use env_logger::Env;
 use num_cpus;
 
 mod routes;
-mod utils;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

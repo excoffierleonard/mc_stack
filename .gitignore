@@ -1,9 +1,8 @@
 # Ignore everything in the stack dir except the .gitkeep file
-stacks/*
-!stacks/.gitkeep
+stacks/
 
 # Ignore Rust builds files
-/target
+target/
 mc_stack
 
 # Log file

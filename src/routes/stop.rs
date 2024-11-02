@@ -1,6 +1,8 @@
-use actix_web::{post, web, Error, HttpResponse};
+// src/routes/stop.rs
+use actix_web::{post, web, Error, HttpResponse, ResponseError};
 use serde_json::json;
 use std::path::PathBuf;
+use std::fmt;
 use tokio::process::Command;
 
 #[derive(Debug)]
@@ -9,22 +11,28 @@ enum StopStackError {
     DockerError(String),
 }
 
-impl StopStackError {
-    fn to_http_response(&self) -> Result<HttpResponse, Error> {
-        let (status, message) = match self {
-            StopStackError::StackNotFound(msg) => (
-                actix_web::http::StatusCode::NOT_FOUND,
-                msg.clone(),
-            ),
-            StopStackError::DockerError(msg) => (
-                actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
-                msg.clone(),
-            ),
-        };
+impl fmt::Display for StopStackError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::StackNotFound(msg) | Self::DockerError(msg) => {
+                write!(f, "{}", msg)
+            }
+        }
+    }
+}
 
-        Ok(HttpResponse::build(status)
+impl ResponseError for StopStackError {
+    fn status_code(&self) -> actix_web::http::StatusCode {
+        match self {
+            StopStackError::StackNotFound(_) => actix_web::http::StatusCode::NOT_FOUND,
+            StopStackError::DockerError(_) => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+
+    fn error_response(&self) -> HttpResponse {
+        HttpResponse::build(self.status_code())
             .content_type("application/json")
-            .json(json!({ "message": message })))
+            .json(json!({ "message": self.to_string() }))
     }
 }
 
@@ -49,15 +57,11 @@ async fn get_compose_file_path(stack_id: &str) -> Result<PathBuf, StopStackError
 }
 
 async fn stop_stack_impl(stack_id: String) -> Result<HttpResponse, Error> {
-    let compose_file = match get_compose_file_path(&stack_id).await {
-        Ok(path) => path,
-        Err(e) => {
-            log::error!("Failed to get compose file path: {:?}", e);
-            return e.to_http_response();
-        }
-    };
+    // Get compose file path
+    let compose_file = get_compose_file_path(&stack_id).await?;
 
-    let output = match Command::new("docker")
+    // Run docker compose down
+    let output = Command::new("docker")
         .args([
             "compose",
             "-f",
@@ -66,22 +70,15 @@ async fn stop_stack_impl(stack_id: String) -> Result<HttpResponse, Error> {
         ])
         .output()
         .await
-    {
-        Ok(output) => output,
-        Err(e) => {
-            let error = StopStackError::DockerError(
-                format!("Failed to execute docker compose: {}", e)
-            );
-            return error.to_http_response();
-        }
-    };
+        .map_err(|e| StopStackError::DockerError(
+            format!("Failed to execute docker compose: {}", e)
+        ))?;
 
     if !output.status.success() {
         let error_msg = String::from_utf8_lossy(&output.stderr);
-        let error = StopStackError::DockerError(
+        return Err(StopStackError::DockerError(
             format!("Failed to stop stack {}: {}", stack_id, error_msg)
-        );
-        return error.to_http_response();
+        ))?;
     }
 
     Ok(HttpResponse::Ok().json(json!({

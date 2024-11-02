@@ -1,6 +1,8 @@
-use actix_web::{get, Error, HttpResponse};
+// src/routes/list.rs
+use actix_web::{get, Error, HttpResponse, ResponseError};
 use serde_json::{json, Value};
 use std::path::PathBuf;
+use std::fmt;
 use tokio::process::Command;
 use walkdir::WalkDir;
 use reqwest;
@@ -13,22 +15,30 @@ enum ListStackError {
     NetworkError(String),
 }
 
-impl ListStackError {
-    fn to_http_response(&self) -> Result<HttpResponse, Error> {
-        let (status, message) = match self {
-            ListStackError::DirectoryError(msg) => (
-                actix_web::http::StatusCode::NOT_FOUND,
-                msg.clone(),
-            ),
-            ListStackError::DockerError(msg) | ListStackError::NetworkError(msg) => (
-                actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
-                msg.clone(),
-            ),
-        };
+impl fmt::Display for ListStackError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::DirectoryError(msg) | Self::DockerError(msg) | Self::NetworkError(msg) => {
+                write!(f, "{}", msg)
+            }
+        }
+    }
+}
 
-        Ok(HttpResponse::build(status)
+impl ResponseError for ListStackError {
+    fn status_code(&self) -> actix_web::http::StatusCode {
+        match self {
+            ListStackError::DirectoryError(_) => actix_web::http::StatusCode::NOT_FOUND,
+            ListStackError::DockerError(_) | ListStackError::NetworkError(_) => {
+                actix_web::http::StatusCode::INTERNAL_SERVER_ERROR
+            }
+        }
+    }
+
+    fn error_response(&self) -> HttpResponse {
+        HttpResponse::build(self.status_code())
             .content_type("application/json")
-            .json(json!({ "message": message })))
+            .json(json!({ "message": self.to_string() }))
     }
 }
 
@@ -98,7 +108,6 @@ async fn get_running_containers() -> Result<HashMap<String, ServiceStatus>, List
         let name = parts[0];
         let ports = parts[1];
 
-        // Extract port from the ports string (looking for 0.0.0.0:PORT pattern)
         let port = ports.split(',')
             .filter_map(|p| p.trim().split(':').nth(1))
             .filter_map(|p| p.split('-').next())
@@ -118,11 +127,7 @@ async fn get_running_containers() -> Result<HashMap<String, ServiceStatus>, List
 }
 
 async fn list_stacks_impl() -> Result<HttpResponse, Error> {
-    // Get stacks directory
-    let stacks_dir = match get_stacks_directory().await {
-        Ok(dir) => dir,
-        Err(e) => return e.to_http_response(),
-    };
+    let stacks_dir = get_stacks_directory().await?;
 
     // Get all compose files
     let mut stacks = Vec::new();
@@ -137,15 +142,9 @@ async fn list_stacks_impl() -> Result<HttpResponse, Error> {
                 .unwrap_or(false)
         })
     {
-        let entry = match entry {
-            Ok(e) => e,
-            Err(e) => {
-                let error = ListStackError::DirectoryError(
-                    format!("Failed to read directory entry: {}", e)
-                );
-                return error.to_http_response();
-            }
-        };
+        let entry = entry.map_err(|e| ListStackError::DirectoryError(
+            format!("Failed to read directory entry: {}", e)
+        ))?;
         
         let stack_dir = entry.path().parent().unwrap();
         let stack_id = stack_dir
@@ -161,7 +160,7 @@ async fn list_stacks_impl() -> Result<HttpResponse, Error> {
         stacks.push(stack_id);
     }
 
-    // Get WAN IP first
+    // Get WAN IP first - we use unwrap_or_default() for WAN IP since it's not critical
     let wan_ip = get_wan_ip().await.unwrap_or_default();
 
     if stacks.is_empty() {
@@ -175,10 +174,7 @@ async fn list_stacks_impl() -> Result<HttpResponse, Error> {
     }
 
     // Get running containers
-    let containers = match get_running_containers().await {
-        Ok(c) => c,
-        Err(e) => return e.to_http_response(),
-    };
+    let containers = get_running_containers().await?;
 
     // Build stacks status
     let stack_statuses: Vec<Value> = stacks.iter().map(|stack_id| {

@@ -1,7 +1,8 @@
 // src/routes/delete.rs
-use actix_web::{delete, web, Error, HttpResponse};
+use actix_web::{delete, web, Error, HttpResponse, ResponseError};
 use serde_json::json;
 use std::path::PathBuf;
+use std::fmt;
 use tokio::process::Command;
 use tokio::fs;
 
@@ -12,22 +13,30 @@ enum DeleteStackError {
     FileSystemError(String),
 }
 
-impl DeleteStackError {
-    fn to_http_response(&self) -> Result<HttpResponse, Error> {
-        let (status, message) = match self {
-            DeleteStackError::StackNotFound(msg) => (
-                actix_web::http::StatusCode::NOT_FOUND,
-                msg.clone(),
-            ),
-            DeleteStackError::DockerError(msg) | DeleteStackError::FileSystemError(msg) => (
-                actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
-                msg.clone(),
-            ),
-        };
+impl fmt::Display for DeleteStackError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::StackNotFound(msg) | Self::DockerError(msg) | Self::FileSystemError(msg) => {
+                write!(f, "{}", msg)
+            }
+        }
+    }
+}
 
-        Ok(HttpResponse::build(status)
+impl ResponseError for DeleteStackError {
+    fn status_code(&self) -> actix_web::http::StatusCode {
+        match self {
+            DeleteStackError::StackNotFound(_) => actix_web::http::StatusCode::NOT_FOUND,
+            DeleteStackError::DockerError(_) | DeleteStackError::FileSystemError(_) => {
+                actix_web::http::StatusCode::INTERNAL_SERVER_ERROR
+            }
+        }
+    }
+
+    fn error_response(&self) -> HttpResponse {
+        HttpResponse::build(self.status_code())
             .content_type("application/json")
-            .json(json!({ "message": message })))
+            .json(json!({ "message": self.to_string() }))
     }
 }
 
@@ -53,24 +62,12 @@ async fn get_compose_file_path(stack_id: &str) -> Result<PathBuf, DeleteStackErr
 
 async fn delete_stack_impl(stack_id: String) -> Result<HttpResponse, Error> {
     // Get compose file path and stack directory
-    let compose_file = match get_compose_file_path(&stack_id).await {
-        Ok(path) => path,
-        Err(e) => {
-            log::error!("Failed to get compose file path: {:?}", e);
-            return e.to_http_response();
-        }
-    };
-
-    let stack_dir = match compose_file.parent() {
-        Some(dir) => dir,
-        None => {
-            let error = DeleteStackError::FileSystemError("Failed to get stack directory".to_string());
-            return error.to_http_response();
-        }
-    };
+    let compose_file = get_compose_file_path(&stack_id).await?;
+    let stack_dir = compose_file.parent()
+        .ok_or_else(|| DeleteStackError::FileSystemError("Failed to get stack directory".to_string()))?;
 
     // Step 1: Stop the stack using docker compose down
-    let output = match Command::new("docker")
+    let output = Command::new("docker")
         .args([
             "compose",
             "-f",
@@ -79,27 +76,20 @@ async fn delete_stack_impl(stack_id: String) -> Result<HttpResponse, Error> {
         ])
         .output()
         .await
-    {
-        Ok(output) => output,
-        Err(e) => {
-            let error = DeleteStackError::DockerError(
-                format!("Failed to execute docker compose down: {}", e)
-            );
-            return error.to_http_response();
-        }
-    };
+        .map_err(|e| DeleteStackError::DockerError(
+            format!("Failed to execute docker compose down: {}", e)
+        ))?;
 
     if !output.status.success() {
         let error_msg = String::from_utf8_lossy(&output.stderr);
-        let error = DeleteStackError::DockerError(
+        return Err(DeleteStackError::DockerError(
             format!("Failed to stop stack {}: {}", stack_id, error_msg)
-        );
-        return error.to_http_response();
+        ))?;
     }
 
     // Step 2: Remove the Docker volume
     let volume_name = format!("minecraft_server_{}", stack_id);
-    let output = match Command::new("docker")
+    let output = Command::new("docker")
         .args([
             "volume",
             "rm",
@@ -107,34 +97,22 @@ async fn delete_stack_impl(stack_id: String) -> Result<HttpResponse, Error> {
         ])
         .output()
         .await
-    {
-        Ok(output) => output,
-        Err(e) => {
-            let error = DeleteStackError::DockerError(
-                format!("Failed to remove docker volume: {}", e)
-            );
-            return error.to_http_response();
-        }
-    };
+        .map_err(|e| DeleteStackError::DockerError(
+            format!("Failed to remove docker volume: {}", e)
+        ))?;
 
     if !output.status.success() {
         let error_msg = String::from_utf8_lossy(&output.stderr);
-        let error = DeleteStackError::DockerError(
+        return Err(DeleteStackError::DockerError(
             format!("Failed to remove minecraft server volume: {}", error_msg)
-        );
-        return error.to_http_response();
+        ))?;
     }
 
     // Step 3: Remove the stack directory
-    match fs::remove_dir_all(stack_dir).await {
-        Ok(_) => (),
-        Err(e) => {
-            let error = DeleteStackError::FileSystemError(
-                format!("Failed to remove stack directory: {}", e)
-            );
-            return error.to_http_response();
-        }
-    }
+    fs::remove_dir_all(stack_dir).await
+        .map_err(|e| DeleteStackError::FileSystemError(
+            format!("Failed to remove stack directory: {}", e)
+        ))?;
 
     Ok(HttpResponse::Ok().json(json!({
         "message": format!("Stack {} has been successfully deleted", stack_id)

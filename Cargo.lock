@@ -940,6 +940,7 @@ dependencies = [
  "env_logger",
  "log",
  "num_cpus",
+ "regex",
  "reqwest",
  "serde_json",
  "tokio",
