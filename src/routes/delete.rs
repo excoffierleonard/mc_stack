@@ -1,4 +1,3 @@
-// src/routes/delete.rs
 use actix_web::{delete, web, Error, HttpResponse, ResponseError};
 use serde_json::json;
 use std::path::PathBuf;

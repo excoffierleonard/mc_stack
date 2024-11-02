@@ -1,4 +1,3 @@
-// src/routes/stop.rs
 use actix_web::{post, web, Error, HttpResponse, ResponseError};
 use serde_json::json;
 use std::path::PathBuf;
