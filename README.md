@@ -159,3 +159,4 @@ docker compose up -d
 ## Notes
 
 - The service runs on `0.0.0.0:8080`
+- The docker container need to have the `docker.sock` mounted to `/var/run/docker.sock`
