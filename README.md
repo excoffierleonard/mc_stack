@@ -155,7 +155,7 @@ docker compose up -d
 - Use docker hashes as a better source of truth for listing container
 - List all containers and their status using docker ps rather than weird combination of listing the dirs etc...
 - Really do better introspection of the avaible docker commands.
-- Have proper dev workflows
+- Have proper dev workflows, this is a test dev update
 
 ## Notes
 
