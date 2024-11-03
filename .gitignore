@@ -7,3 +7,6 @@ mc_stack
 
 # Log file
 output.log
+
+# Do not ignore the template .env file
+!/template/.env

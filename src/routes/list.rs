@@ -142,7 +142,7 @@ async fn list_stacks_impl() -> Result<HttpResponse, Error> {
         stacks.push(stack_id);
     }
 
-    // TODO: Hardcoded WAN IP for nowf or performance reasons, 
+    // TODO: Hardcoded WAN IP for now or performance reasons, 
     // must find way to get it from the running dockers themeslesves to say some loading time,
     // currently it takes ~200ms to get the WAN IP by fetching it from the web,
     // objective is to get it under 20ms
