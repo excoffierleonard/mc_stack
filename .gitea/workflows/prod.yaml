@@ -1,0 +1,55 @@
+name: Build, push and deploy to production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@main
+
+      - name: Login to Container Registry
+        uses: docker/login-action@master
+        with:
+          registry: ${{ vars.REGISTRY_HOST }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@master
+        with:
+          context: .
+          push: true
+          tags: ${{ vars.REGISTRY_HOST }}/${{ gitea.repository }}:latest
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code to get compose file
+        uses: actions/checkout@main
+
+      - name: Copy compose file to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ vars.PROD_HOST }}
+          username: ${{ secrets.PROD_USERNAME }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          source: "compose.yaml"
+          target: "/home/${{ gitea.repository }}/"
+
+      - name: Deploy to production
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ vars.PROD_HOST }}
+          username: ${{ secrets.PROD_USERNAME }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            docker login ${{ vars.REGISTRY_HOST }} -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }}
+            docker compose -f /home/${{ gitea.repository }}/compose.yaml pull
+            docker compose -f /home/${{ gitea.repository }}/compose.yaml down
+            docker compose -f /home/${{ gitea.repository }}/compose.yaml up -d
