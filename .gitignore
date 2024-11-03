@@ -2,7 +2,7 @@
 /target
 
 # Log file
-output.log
+*.log
 
 # Do not ignore the template .env file
 !/template/.env
