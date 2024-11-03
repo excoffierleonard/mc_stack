@@ -729,6 +729,7 @@ dependencies = [
  "num_cpus",
  "regex",
  "rust-embed",
+ "serde",
  "serde_json",
  "tokio",
  "walkdir",

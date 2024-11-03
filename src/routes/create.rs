@@ -194,7 +194,7 @@ async fn create_stack_impl() -> Result<HttpResponse, Error> {
     })))
 }
 
-#[post("/create")]
+#[post("/stacks")]
 pub async fn create_stack() -> Result<HttpResponse, Error> {
     create_stack_impl().await
 }

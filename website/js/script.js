@@ -2,9 +2,10 @@
 const CONFIG = {
     AUTO_HIDE_DELAY: 5000,
     ENDPOINTS: {
-        CREATE: '/api/v1/create',
-        LIST: '/api/v1/list',
-        STACK: (id) => `/api/v1/${id}`,
+        CREATE: '/api/v1/stacks',
+        LIST: '/api/v1/stacks',
+        STACK: (id) => `/api/v1/stacks/${id}`,
+        STACK_STATUS: (id) => `/api/v1/stacks/${id}/status`,
     },
     STATUS_CLASSES: {
         success: 'bg-green-50 text-green-700',
@@ -51,7 +52,7 @@ const createServerCard = (stack, wan_ip) => {
             <div class="flex gap-2 w-full sm:w-auto">
                 ${mcStatus.status === 'stopped' ? `
                     <button
-                        onclick="startStack(${stack.stack_id})"
+                        onclick="updateStackStatus(${stack.stack_id}, 'running')"
                         class="btn-action bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 flex-1 sm:flex-none"
                     >
                         <span class="btn-text">Start</span>
@@ -59,7 +60,7 @@ const createServerCard = (stack, wan_ip) => {
                     </button>
                 ` : `
                     <button
-                        onclick="stopStack(${stack.stack_id})"
+                        onclick="updateStackStatus(${stack.stack_id}, 'stopped')"
                         class="btn-action bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 flex-1 sm:flex-none"
                     >
                         <span class="btn-text">Stop</span>
@@ -89,11 +90,21 @@ const updateServerList = (data) => {
 };
 
 // API request handler
-async function executeRequest(url, method, buttonElement) {
+async function executeRequest(url, method, buttonElement, body = null) {
     setButtonState(buttonElement, true);
 
     try {
-        const response = await fetch(url, { method });
+        const options = {
+            method,
+            headers: {}
+        };
+
+        if (body) {
+            options.headers['Content-Type'] = 'application/json';
+            options.body = JSON.stringify(body);
+        }
+
+        const response = await fetch(url, options);
         const data = await response.json();
         
         if (response.ok) {
@@ -130,19 +141,12 @@ async function refreshServerList() {
     if (data) updateServerList(data);
 }
 
-async function startStack(id) {
+async function updateStackStatus(id, status) {
     await executeRequest(
-        CONFIG.ENDPOINTS.STACK(id),
-        'PUT',
-        document.querySelector(`button[onclick="startStack(${id})"]`)
-    );
-}
-
-async function stopStack(id) {
-    await executeRequest(
-        CONFIG.ENDPOINTS.STACK(id),
-        'POST',
-        document.querySelector(`button[onclick="stopStack(${id})"]`)
+        CONFIG.ENDPOINTS.STACK_STATUS(id),
+        'PATCH',
+        document.querySelector(`button[onclick="updateStackStatus(${id}, '${status}')"]`),
+        { status }
     );
 }
 

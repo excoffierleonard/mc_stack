@@ -202,7 +202,7 @@ async fn list_stacks_impl() -> Result<HttpResponse, Error> {
     })))
 }
 
-#[get("/list")]
+#[get("/stacks")]
 pub async fn list_stacks() -> Result<HttpResponse, Error> {
     list_stacks_impl().await
 }

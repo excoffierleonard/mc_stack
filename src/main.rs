@@ -24,8 +24,7 @@ async fn main() -> std::io::Result<()> {
                 web::scope("/api/v1")
                     .service(routes::create::create_stack)
                     .service(routes::delete::delete_stack)
-                    .service(routes::start::start_stack)
-                    .service(routes::stop::stop_stack)
+                    .service(routes::status::update_stack_status)
                     .service(routes::list::list_stacks),
             )
             // Static web files
