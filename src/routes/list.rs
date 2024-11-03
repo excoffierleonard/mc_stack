@@ -146,7 +146,7 @@ async fn list_stacks_impl() -> Result<HttpResponse, Error> {
     // must find way to get it from the running dockers themeslesves to say some loading time,
     // currently it takes ~200ms to get the WAN IP by fetching it from the web,
     // objective is to get it under 20ms
-    let wan_ip = "127.0.0.1".to_string();
+    let wan_ip = "24.48.49.227".to_string();
 
     if stacks.is_empty() {
         return Ok(HttpResponse::Ok().json(json!({
