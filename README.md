@@ -129,6 +129,7 @@ cargo run
 
 ```bash
 cargo build --release && \
+pkill mc_stack && \
 nohup target/release/mc_stack &> output.log &
 ```
 
