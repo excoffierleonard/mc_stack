@@ -4,20 +4,18 @@ use std::path::PathBuf;
 use std::fmt;
 use tokio::process::Command;
 use walkdir::WalkDir;
-use reqwest;
 use std::collections::HashMap;
 
 #[derive(Debug)]
 enum ListStackError {
     DirectoryError(String),
     DockerError(String),
-    NetworkError(String),
 }
 
 impl fmt::Display for ListStackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::DirectoryError(msg) | Self::DockerError(msg) | Self::NetworkError(msg) => {
+            Self::DirectoryError(msg) | Self::DockerError(msg) => {
                 write!(f, "{}", msg)
             }
         }
@@ -28,9 +26,7 @@ impl ResponseError for ListStackError {
     fn status_code(&self) -> actix_web::http::StatusCode {
         match self {
             ListStackError::DirectoryError(_) => actix_web::http::StatusCode::NOT_FOUND,
-            ListStackError::DockerError(_) | ListStackError::NetworkError(_) => {
-                actix_web::http::StatusCode::INTERNAL_SERVER_ERROR
-            }
+            ListStackError::DockerError(_) => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 
@@ -45,19 +41,6 @@ impl ResponseError for ListStackError {
 struct ServiceStatus {
     status: String,
     port: Option<String>,
-}
-
-async fn get_wan_ip() -> Result<String, ListStackError> {
-    let ip = reqwest::get("http://ipinfo.io/ip")
-        .await
-        .map_err(|e| ListStackError::NetworkError(format!("Failed to get WAN IP: {}", e)))?
-        .text()
-        .await
-        .map_err(|e| ListStackError::NetworkError(format!("Failed to read WAN IP response: {}", e)))?
-        .trim()
-        .to_string();
-    
-    Ok(ip)
 }
 
 async fn get_stacks_directory() -> Result<PathBuf, ListStackError> {
@@ -159,8 +142,11 @@ async fn list_stacks_impl() -> Result<HttpResponse, Error> {
         stacks.push(stack_id);
     }
 
-    // Get WAN IP first - we use unwrap_or_default() for WAN IP since it's not critical
-    let wan_ip = get_wan_ip().await.unwrap_or_default();
+    // TODO: Hardcoded WAN IP for nowf or performance reasons, 
+    // must find way to get it from the running dockers themeslesves to say some loading time,
+    // currently it takes ~200ms to get the WAN IP by fetching it from the web,
+    // objective is to get it under 20ms
+    let wan_ip = "127.0.0.1".to_string();
 
     if stacks.is_empty() {
         return Ok(HttpResponse::Ok().json(json!({
