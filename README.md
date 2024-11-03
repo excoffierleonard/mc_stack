@@ -142,11 +142,8 @@ pkill mc_stack
 ### Docker
 
 ```bash
-docker build -t git.jisoonet.com/el/mc_stack . && \
-docker push git.jisoonet.com/el/mc_stack
-```
-
-```bash
+docker compose pull && \
+docker compose down && \
 docker compose up -d
 ```
 
