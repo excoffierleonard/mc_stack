@@ -1,48 +1,40 @@
 # Step 1: Build the application
-FROM rust:latest AS builder
+FROM rust:slim AS builder
 
 WORKDIR /usr/src/mc_stack
+
 COPY . .
 
-RUN cargo install --path .
+RUN cargo build --release
 
-# Step 2: Create a smaller image for the runtime
+# Step 2: Download latest static docker CLI and compose in a separate stage
+FROM debian:stable-slim AS docker-cli
+
+RUN apt update && apt install -y curl
+
+RUN DOCKER_VERSION=$(curl -s https://download.docker.com/linux/static/stable/x86_64/ | grep -o 'docker-[0-9]*\.[0-9]*\.[0-9]*\.tgz' | sort -V | tail -n 1 | sed 's/docker-//;s/\.tgz//') && \
+    echo "Using Docker version: ${DOCKER_VERSION}" && \
+    curl -fsSL "https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz" -o docker.tgz \
+    && tar xzvf docker.tgz docker/docker \
+    && mv docker/docker /usr/local/bin/docker \
+    && rm -rf docker docker.tgz
+
+RUN mkdir -p /usr/local/lib/docker/cli-plugins && \
+    COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep -o '"tag_name": ".*"' | cut -d'"' -f4 | sed 's/^v//') && \
+    echo "Using Docker Compose version: ${COMPOSE_VERSION}" && \
+    curl -fsSL "https://github.com/docker/compose/releases/download/v${COMPOSE_VERSION}/docker-compose-linux-x86_64" -o /usr/local/lib/docker/cli-plugins/docker-compose && \
+    chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+# Step 3: Create a smaller image for the runtime
 FROM debian:stable-slim
 
 WORKDIR /mc_stack
 
-# Install Docker CLI using the official Docker repository
-RUN apt update && apt install -y \
-    ca-certificates \
-    curl \
-    gnupg
+COPY --from=docker-cli /usr/local/bin/docker /usr/local/bin/docker
 
-# Add Docker's official GPG key
-RUN install -m 0755 -d /etc/apt/keyrings && \
-    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
-    chmod a+r /etc/apt/keyrings/docker.gpg
+COPY --from=docker-cli /usr/local/lib/docker/cli-plugins /usr/local/lib/docker/cli-plugins
 
-# Add the repository to Apt sources
-RUN echo \
-    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
-    $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-    tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-# Install Docker CLI
-RUN apt update && \
-    apt install -y docker-ce-cli
-
-# Clean up
-RUN apt remove -y \
-    ca-certificates \
-    curl \
-    gnupg \
-    && \
-    apt autoremove -y && \
-    apt clean && \
-    rm -rf /var/lib/apt/lists/*
-
-COPY --from=builder /usr/local/cargo/bin/mc_stack .
+COPY --from=builder /usr/src/mc_stack/target/release/mc_stack .
 
 VOLUME ["/mc_stack/stacks"]
 
