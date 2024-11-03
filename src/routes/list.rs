@@ -45,6 +45,7 @@ struct ServiceStatus {
     port: Option<String>,
 }
 
+// Maybe don't automatically create on dir on dir not found
 async fn get_stacks_directory() -> Result<PathBuf, ListStackError> {
     let current_exe = std::env::current_exe()
         .map_err(|e| ListStackError::FileSystemError(format!("Failed to get current path: {}", e)))?;
