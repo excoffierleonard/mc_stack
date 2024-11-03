@@ -152,8 +152,6 @@ docker compose up -d
 - Implement a backup mechanism using duplicacy
 - Migrate everything to rust, the static web files may be converted to webassembly
 - Directly using Docker Api to manage containers rather than installing docker cli, and maybe in the far future implement the container management system fully in rust (maybe not docker compose is usefull)
-- Make downloading docker exec binary dyanmic to latest works
-- Maybe try alpine linux if its compatible
 - Use docker hashes as a better source of truth for listing container
 - List all containers and their status using docker ps rather than weird combination of listing the dirs etc...
 - Really do better introspection of the avaible docker commands.
