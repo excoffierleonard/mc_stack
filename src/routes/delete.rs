@@ -113,9 +113,7 @@ async fn delete_stack_impl(stack_id: String) -> Result<HttpResponse, Error> {
             format!("Failed to remove stack directory: {}", e)
         ))?;
 
-    Ok(HttpResponse::Ok().json(json!({
-        "message": format!("Stack {} has been successfully deleted", stack_id)
-    })))
+    Ok(HttpResponse::NoContent().finish())
 }
 
 #[delete("/stacks/{stack_id}")]

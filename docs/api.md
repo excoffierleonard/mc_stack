@@ -91,14 +91,10 @@ Removes an existing Minecraft server stack and its associated resources.
 - `stack_id` (path parameter): The unique identifier of the stack to delete
 
 **Response:**
-```json
-{
-    "message": "Stack 1 has been successfully deleted"
-}
-```
+- Empty response body
 
 **Status Codes:**
-- `200 OK`: Stack deleted successfully
+- `204 No Content`: Stack has been successfully deleted
 - `404 Not Found`: Stack not found
 - `500 Internal Server Error`: Deletion failed
 
