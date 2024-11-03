@@ -154,9 +154,9 @@ docker compose up -d
 - Directly using Docker Api to manage containers rather than installing docker cli, and maybe in the far future implement the container management system fully in rust (maybe not docker compose is usefull)
 - Use docker hashes as a better source of truth for listing container
 - List all containers and their status using docker ps rather than weird combination of listing the dirs etc...
-- Really do better introspection of the avaible docker commands.
-- Have proper dev workflows, this is a test dev update
+- Really do better introspection of the avaible docker commands. Maybe use the docker crate to do this
 
 ## Notes
 
 - The service runs on `0.0.0.0:8080`
+- The docker container need to have the `docker.sock` mounted to `/var/run/docker.sock`
