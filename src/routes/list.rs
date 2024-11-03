@@ -5,17 +5,18 @@ use std::fmt;
 use tokio::process::Command;
 use walkdir::WalkDir;
 use std::collections::HashMap;
+use std::fs;
 
 #[derive(Debug)]
 enum ListStackError {
-    DirectoryError(String),
+    FileSystemError(String),
     DockerError(String),
 }
 
 impl fmt::Display for ListStackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::DirectoryError(msg) | Self::DockerError(msg) => {
+            Self::FileSystemError(msg) | Self::DockerError(msg) => {
                 write!(f, "{}", msg)
             }
         }
@@ -25,8 +26,9 @@ impl fmt::Display for ListStackError {
 impl ResponseError for ListStackError {
     fn status_code(&self) -> actix_web::http::StatusCode {
         match self {
-            ListStackError::DirectoryError(_) => actix_web::http::StatusCode::NOT_FOUND,
-            ListStackError::DockerError(_) => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
+            ListStackError::FileSystemError(_) | ListStackError::DockerError(_) => {
+                actix_web::http::StatusCode::INTERNAL_SERVER_ERROR
+            }
         }
     }
 
@@ -45,17 +47,16 @@ struct ServiceStatus {
 
 async fn get_stacks_directory() -> Result<PathBuf, ListStackError> {
     let current_exe = std::env::current_exe()
-        .map_err(|e| ListStackError::DirectoryError(format!("Failed to get current path: {}", e)))?;
+        .map_err(|e| ListStackError::FileSystemError(format!("Failed to get current path: {}", e)))?;
     
     let stacks_dir = current_exe
         .parent()
-        .ok_or_else(|| ListStackError::DirectoryError("Failed to find executable directory".to_string()))?
+        .ok_or_else(|| ListStackError::FileSystemError("Failed to find executable directory".to_string()))?
         .join("stacks");
 
     if !stacks_dir.exists() {
-        return Err(ListStackError::DirectoryError(
-            format!("Stacks directory {:?} does not exist", stacks_dir)
-        ));
+        fs::create_dir_all(&stacks_dir)
+            .map_err(|e| ListStackError::FileSystemError(format!("Failed to create stacks directory: {}", e)))?;
     }
 
     Ok(stacks_dir)
@@ -124,7 +125,7 @@ async fn list_stacks_impl() -> Result<HttpResponse, Error> {
                 .unwrap_or(false)
         })
     {
-        let entry = entry.map_err(|e| ListStackError::DirectoryError(
+        let entry = entry.map_err(|e| ListStackError::FileSystemError(
             format!("Failed to read directory entry: {}", e)
         ))?;
         
@@ -143,7 +144,7 @@ async fn list_stacks_impl() -> Result<HttpResponse, Error> {
     }
 
     // TODO: Hardcoded WAN IP for now or performance reasons, 
-    // must find way to get it from the running dockers themeslesves to say some loading time,
+    // must find way to get it from the running dockers themselves to save some loading time,
     // currently it takes ~200ms to get the WAN IP by fetching it from the web,
     // objective is to get it under 20ms
     let wan_ip = "24.48.49.227".to_string();
