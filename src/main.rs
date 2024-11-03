@@ -1,4 +1,3 @@
-use actix_files as fs;
 use actix_web::{
     middleware::{Compress, Logger},
     web, App, HttpServer,
@@ -7,6 +6,7 @@ use env_logger::Env;
 use num_cpus;
 
 mod routes;
+mod website;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -19,6 +19,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(Compress::default())
             .wrap(Logger::default())
+            // API routes
             .service(
                 web::scope("/api/v1")
                     .service(routes::create::create_stack)
@@ -27,7 +28,8 @@ async fn main() -> std::io::Result<()> {
                     .service(routes::stop::stop_stack)
                     .service(routes::list::list_stacks),
             )
-            .service(fs::Files::new("/", "web/").index_file("index.html"))
+            // Static web files
+            .configure(website::config)
     })
     .bind("0.0.0.0:8080")?
     .workers(num_workers)
