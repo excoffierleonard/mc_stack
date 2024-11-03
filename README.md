@@ -158,6 +158,8 @@ docker compose up -d
 - Make downloading docker exec binary dyanmic to latest works
 - Maybe try alpine linux if its compatible
 - Use docker hashes as a better source of truth for listing container
+- List all containers and their status using docker ps rather than weird combination of listing the dirs etc...
+- Really do better introspection of the avaible docker commands.
 
 ## Notes
 
