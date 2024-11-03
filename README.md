@@ -4,45 +4,12 @@
 
 ```bash
 git clone https://git.jisoonet.com/el/mc_stack.git && \
-cd mc_stack && \
-chmod +x scripts/*.sh
-```
-
-## Using the scripts directly
-
-### Create a new stack
-
-```bash
-./scripts/create_stack.sh
-```
-
-### Delete the stack
-
-```bash
-./scripts/delete_stack.sh <stack_id>
-```
-
-### Start the stack
-
-```bash
-./scripts/start_stack.sh <stack_id>
-```
-
-### Stop the stack
-
-```bash
-./scripts/stop_stack.sh <stack_id>
-```
-
-### List the stacks
-
-```bash
-./scripts/list_stacks.sh
+cd mc_stack
 ```
 
 ## API
 
-The service provides REST endpoints for managing Minecraft server stacks. All responses contain the output of the corresponding shell script execution.
+The service provides REST endpoints for managing Minecraft server stacks.
 
 ### Endpoints
 
@@ -162,8 +129,7 @@ cargo run
 
 ```bash
 cargo build --release && \
-cp target/release/mc_stack ./ && \
-nohup ./mc_stack &> output.log &
+nohup target/release/mc_stack &> output.log &
 ```
 
 ### Stop
@@ -175,10 +141,8 @@ pkill mc_stack
 ## Todo
 
 - Implement a backup mechanism using duplicacy
-- Migrate everything to rust, the static web files, and the shell scripts
+- Migrate everything to rust, the static web files may be converted to webassembly
 
 ## Notes
 
 - The service runs on `0.0.0.0:8080`
-- All stack management operations are performed through shell scripts in the `scripts/` directory
-- Ensure all scripts in the `scripts/` directory are executable (`chmod +x scripts/*.sh`)
