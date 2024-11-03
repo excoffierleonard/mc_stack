@@ -9,6 +9,14 @@ RUN cargo install --path .
 # Step 2: Create a smaller image for the runtime
 FROM debian:stable-slim
 
-COPY --from=builder /usr/local/cargo/bin/mc_stack /usr/local/bin/mc_stack
+WORKDIR /mc_stack
 
-CMD ["mc_stack"]
+RUN apt-get update && apt-get install -y curl
+
+RUN curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+
+COPY --from=builder /usr/local/cargo/bin/mc_stack .
+
+VOLUME [ "./stacks" ]
+
+CMD ["./mc_stack"]

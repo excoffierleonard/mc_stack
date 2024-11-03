@@ -1,0 +1,20 @@
+services:
+  mc_stack:
+    image: git.jisoonet.com/el/mc_stack
+    container_name: mc_stack
+    ports:
+      - "8080:8080"
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+    - mc_stack:/mc_stack/stacks
+    networks:
+      - mc_stack
+    restart: unless-stopped	
+
+volumes:
+  mc_stack:
+    name: mc_stack
+
+networks:
+  mc_stack:
+    name: mc_stack

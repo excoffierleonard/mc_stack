@@ -139,6 +139,17 @@ nohup target/release/mc_stack &> output.log &
 pkill mc_stack
 ```
 
+### Docker
+
+```bash
+docker build -t git.jisoonet.com/el/mc_stack . && \
+docker push git.jisoonet.com/el/mc_stack
+```
+
+```bash
+docker compose up -d
+```
+
 ## Todo
 
 - Implement a backup mechanism using duplicacy
