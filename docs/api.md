@@ -11,6 +11,11 @@ GET /api/v1/stacks
 
 Retrieves a list of all available Minecraft server stacks.
 
+**Curl Example:**
+```bash
+curl -X GET http://localhost:8080/api/v1/stacks
+```
+
 **Response:**
 ```json
 [
@@ -57,6 +62,13 @@ POST /api/v1/stacks
 
 Creates a new Minecraft server stack instance.
 
+**Curl Example:**
+```bash
+curl -X POST \
+  http://localhost:8080/api/v1/stacks \
+  -H "Content-Type: application/json"
+```
+
 **Response:**
 ```json
 {
@@ -81,6 +93,11 @@ DELETE /api/v1/stacks/{stack_id}
 
 Removes an existing Minecraft server stack and its associated resources.
 
+**Curl Example:**
+```bash
+curl -X DELETE http://localhost:8080/api/v1/stacks/3
+```
+
 **Parameters:**
 - `stack_id` (path parameter): The unique identifier of the stack to delete
 
@@ -98,6 +115,14 @@ PATCH /api/v1/stacks/{stack_id}/status
 ```
 
 Updates the running status of a stack (start/stop).
+
+**Curl Example:**
+```bash
+curl -X PATCH \
+  http://localhost:8080/api/v1/stacks/3/status \
+  -H "Content-Type: application/json" \
+  -d '{"status": "running"}'
+```
 
 **Parameters:**
 - `stack_id` (path parameter): The unique identifier of the stack
