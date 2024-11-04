@@ -13,44 +13,41 @@ Retrieves a list of all available Minecraft server stacks.
 
 **Response:**
 ```json
-{
-    "data": {
-        "stacks": [
-            {
-                "services": {
-                    "minecraft_server": {
-                        "port": null,
-                        "status": "stopped"
-                    },
-                    "sftp_server": {
-                        "port": null,
-                        "status": "stopped"
-                    }
-                },
-                "stack_id": "3"
+[
+    {
+        "stack_id": "3",
+        "wan_ip": "24.48.49.227",
+        "services": {
+            "minecraft_server": {
+                "port": null,
+                "status": "stopped"
             },
-            {
-                "services": {
-                    "minecraft_server": {
-                        "port": "4103",
-                        "status": "running"
-                    },
-                    "sftp_server": {
-                        "port": "4105",
-                        "status": "running"
-                    }
-                },
-                "stack_id": "2"
+            "sftp_server": {
+                "port": null,
+                "status": "stopped"
             }
-        ],
-        "wan_ip": "24.48.49.227"
+        }
     },
-    "message": "Stack status retrieved successfully"
-}
+    {
+        "stack_id": "2",
+        "wan_ip": "24.48.49.227",
+        "services": {
+            "minecraft_server": {
+                "port": "4103",
+                "status": "running"
+            },
+            "sftp_server": {
+                "port": "4105",
+                "status": "running"
+            }
+        }
+    }
+]
 ```
 
 **Status Codes:**
-- `200 OK`: Stack status retrieved successfully
+- `200 OK`: List of stacks retrieved successfully
+- `204 No Content`: No stacks found
 - `500 Internal Server Error`: Retrieval failed
 
 ### Create Stack
@@ -63,20 +60,17 @@ Creates a new Minecraft server stack instance.
 **Response:**
 ```json
 {
-    "data": {
-        "ports": {
-            "minecraft_server": "4109",
-            "rcon": "4110",
-            "sftp_server": "4111"
-        },
-        "stack_id": "4"
-    },
-    "message": "Stack 4 has been successfully created"
+    "stack_id": "3",
+    "ports": {
+        "minecraft_server": "4103",
+        "rcon": "4104",
+        "sftp_server": "4105"
+    }
 }
 ```
 
 **Status Codes:**
-- `201 Created`: Stack has been successfully created
+- `201 Created`: Stack created successfully
 - `403 Forbidden`: Maximum number of stacks reached
 - `500 Internal Server Error`: Creation failed
 
@@ -94,7 +88,7 @@ Removes an existing Minecraft server stack and its associated resources.
 - Empty response body
 
 **Status Codes:**
-- `204 No Content`: Stack has been successfully deleted
+- `204 No Content`: Stack deleted successfully
 - `404 Not Found`: Stack not found
 - `500 Internal Server Error`: Deletion failed
 
@@ -123,37 +117,33 @@ Updates the running status of a stack (start/stop).
 ```
 
 **Status Codes:**
-- `200 OK`: Status updated successfully
+- `204 No Content`: Stack status updated successfully
 - `400 Bad Request`: Invalid status value
 - `404 Not Found`: Stack not found
-- `500 Internal Server Error`: Status update failed
-
-## Error Responses
-
-All endpoints may return error responses in the following format:
-
-```json
-{
-    "message": "Error description"
-}
-```
+- `500 Internal Server Error`: Update failed
 
 ## Status Codes Summary
 
-- `200 OK`: Request succeeded
-- `201 Created`: Resource created successfully
-- `400 Bad Request`: Invalid request (malformed data, invalid status)
-- `404 Not Found`: Requested resource does not exist
+- `200 OK`: Request successful with response body (GET)
+- `201 Created`: Resource created successfully (POST)
+- `204 No Content`: Request successful with no response body (DELETE, PATCH) or empty list (GET)
+- `400 Bad Request`: Invalid request body
+- `403 Forbidden`: Maximum number of stacks reached
+- `404 Not Found`: Resource not found
 - `500 Internal Server Error`: Server-side error occurred
+
+Each code may include a JSON response body with a message field for error cases, except for 201 (returns resource data) and 204 (no body).
 
 ## HTTP Headers
 
 **Request Headers:**
 ```http
-Content-Type: application/json
+Content-Type: application/json  # For POST and PATCH requests only
 ```
 
 **Response Headers:**
 ```http
-Content-Type: application/json
+Content-Type: application/json  # For responses with body (errors, 200, 201)
 ```
+
+Note: 204 responses (successful DELETE and PATCH operations) do not include any Content-Type header as they have no response body.

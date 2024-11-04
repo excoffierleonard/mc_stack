@@ -182,14 +182,11 @@ async fn create_stack_impl() -> Result<HttpResponse, Error> {
     }
 
     Ok(HttpResponse::Created().json(json!({
-        "message": format!("Stack {} has been successfully created", new_stack_id),
-        "data": {
-            "stack_id": new_stack_id.to_string(),
-            "ports": {
-                "minecraft_server": new_server_port.to_string(),
-                "rcon": new_rcon_port.to_string(),
-                "sftp_server": new_sftp_port.to_string()
-            }
+        "stack_id": new_stack_id.to_string(),
+        "ports": {
+            "minecraft_server": new_server_port.to_string(),
+            "rcon": new_rcon_port.to_string(),
+            "sftp_server": new_sftp_port.to_string()
         }
     })))
 }

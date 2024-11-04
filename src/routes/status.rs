@@ -7,26 +7,40 @@ use tokio::process::Command;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct StatusUpdate {
-    status: StackStatus,
+    status: String,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
-#[serde(rename_all = "lowercase")]
+#[derive(Debug, Clone)]
 pub enum StackStatus {
     Running,
     Stopped,
 }
 
 #[derive(Debug)]
-enum StackError {
+pub enum StackError {  // Made public
     StackNotFound(String),
     DockerError(String),
+    InvalidStatus(String),
+}
+
+impl TryFrom<String> for StackStatus {
+    type Error = StackError;
+
+    fn try_from(status: String) -> Result<Self, Self::Error> {
+        match status.to_lowercase().as_str() {
+            "running" => Ok(StackStatus::Running),
+            "stopped" => Ok(StackStatus::Stopped),
+            _ => Err(StackError::InvalidStatus(
+                format!("Invalid status value: '{}'. Must be 'running' or 'stopped'", status)
+            )),
+        }
+    }
 }
 
 impl fmt::Display for StackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::StackNotFound(msg) | Self::DockerError(msg) => {
+            Self::StackNotFound(msg) | Self::DockerError(msg) | Self::InvalidStatus(msg) => {
                 write!(f, "{}", msg)
             }
         }
@@ -38,6 +52,7 @@ impl ResponseError for StackError {
         match self {
             StackError::StackNotFound(_) => actix_web::http::StatusCode::NOT_FOUND,
             StackError::DockerError(_) => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
+            StackError::InvalidStatus(_) => actix_web::http::StatusCode::BAD_REQUEST,
         }
     }
 
@@ -70,13 +85,16 @@ async fn get_compose_file_path(stack_id: &str) -> Result<PathBuf, StackError> {
 
 async fn update_stack_status_impl(
     stack_id: String,
-    status: StackStatus,
+    status_update: StatusUpdate,
 ) -> Result<HttpResponse, Error> {
+    // Convert and validate status
+    let status = StackStatus::try_from(status_update.status)?;
+    
     let compose_file = get_compose_file_path(&stack_id).await?;
     
-    let (docker_command, action_text) = match status {
-        StackStatus::Running => (vec!["up", "-d"], "started"),
-        StackStatus::Stopped => (vec!["down"], "stopped"),
+    let docker_command = match status {
+        StackStatus::Running => vec!["up", "-d"],
+        StackStatus::Stopped => vec!["down"],
     };
 
     let mut cmd = Command::new("docker");
@@ -97,9 +115,7 @@ async fn update_stack_status_impl(
         ))?;
     }
 
-    Ok(HttpResponse::Ok().json(json!({
-        "message": format!("Stack {} has been successfully {}", stack_id, action_text)
-    })))
+    Ok(HttpResponse::NoContent().finish())
 }
 
 #[patch("/stacks/{stack_id}/status")]
@@ -107,5 +123,5 @@ pub async fn update_stack_status(
     stack_id: web::Path<String>,
     status: web::Json<StatusUpdate>,
 ) -> Result<HttpResponse, Error> {
-    update_stack_status_impl(stack_id.into_inner(), status.into_inner().status).await
+    update_stack_status_impl(stack_id.into_inner(), status.into_inner()).await
 }
