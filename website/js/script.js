@@ -35,15 +35,15 @@ const setButtonState = (button, isLoading) => {
     textSpan.classList.toggle('opacity-0', isLoading);
 };
 
-// Create server card HTML
-const createServerCard = (stack, wan_ip) => {
+// Update the server card creation (wan_ip now comes from stack object)
+const createServerCard = (stack) => {
     const mcStatus = stack.services.minecraft_server;
     const sftpStatus = stack.services.sftp_server;
     
     return `
         <div class="bg-gray-50 rounded-lg p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div class="space-y-2">
-                <div class="font-semibold text-gray-800">Stack ${stack.stack_id} <span class="text-gray-500 text-sm ml-2">IP: ${wan_ip || 'Not available'}</span></div>
+                <div class="font-semibold text-gray-800">Stack ${stack.stack_id} <span class="text-gray-500 text-sm ml-2">IP: ${stack.wan_ip || 'Not available'}</span></div>
                 <div class="text-sm text-gray-600">
                     <div>Minecraft Server: ${mcStatus.status} ${mcStatus.port ? `(Port: ${mcStatus.port})` : ''}</div>
                     <div>SFTP Server: ${sftpStatus.status} ${sftpStatus.port ? `(Port: ${sftpStatus.port})` : ''}</div>
@@ -79,17 +79,17 @@ const createServerCard = (stack, wan_ip) => {
     `;
 };
 
-// Update server list
-const updateServerList = (data) => {
+// Update server list function to handle new response structure
+const updateServerList = (stacks) => {
     const serverList = document.getElementById('serverList');
-    if (data.data.stacks.length === 0) {
+    if (!stacks || stacks.length === 0) {
         serverList.innerHTML = '<div class="text-gray-500 text-center py-8">No servers available</div>';
         return;
     }
-    serverList.innerHTML = data.data.stacks.map(stack => createServerCard(stack, data.data.wan_ip)).join('');
+    serverList.innerHTML = stacks.map(stack => createServerCard(stack, stack.wan_ip)).join('');
 };
 
-// API request handler
+// Updated API request handler to handle new status codes and response structures
 async function executeRequest(url, method, buttonElement, body = null) {
     setButtonState(buttonElement, true);
 
@@ -105,16 +105,33 @@ async function executeRequest(url, method, buttonElement, body = null) {
         }
 
         const response = await fetch(url, options);
-        const data = await response.json();
         
+        // Handle 204 No Content responses
+        if (response.status === 204) {
+            showStatus('Operation completed successfully', 'success');
+            if (method !== 'GET') {
+                refreshServerList();
+            }
+            return null;
+        }
+
+        // For responses with content
+        const isJson = response.headers.get('content-type')?.includes('application/json');
+        const data = isJson ? await response.json() : null;
+
         if (response.ok) {
-            showStatus(data.message, 'success');
+            // For successful GET with content or POST with created resource
+            if (method === 'POST') {
+                showStatus(`Stack ${data.stack_id} created successfully`, 'success');
+            }
             if (method !== 'GET') {
                 refreshServerList();
             }
             return data;
         } else {
-            showStatus(data.message, 'error');
+            // Error cases with message
+            const errorMessage = data?.message || 'An error occurred';
+            showStatus(errorMessage, 'error');
         }
     } catch (error) {
         showStatus('An error occurred while processing your request', 'error');
@@ -132,6 +149,7 @@ async function createStack() {
     );
 }
 
+// Update refresh server list to handle new response structure
 async function refreshServerList() {
     const data = await executeRequest(
         CONFIG.ENDPOINTS.LIST,
