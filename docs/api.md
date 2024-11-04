@@ -135,11 +135,7 @@ curl -X PATCH \
 ```
 
 **Response:**
-```json
-{
-    "message": "Stack 1 has been successfully started"
-}
-```
+- Empty response body
 
 **Status Codes:**
 - `204 No Content`: Stack status updated successfully
