@@ -2,9 +2,10 @@
 const CONFIG = {
     AUTO_HIDE_DELAY: 5000,
     ENDPOINTS: {
-        CREATE: '/api/v1/create',
-        LIST: '/api/v1/list',
-        STACK: (id) => `/api/v1/${id}`,
+        CREATE: '/api/v1/stacks',
+        LIST: '/api/v1/stacks',
+        STACK: (id) => `/api/v1/stacks/${id}`,
+        STACK_STATUS: (id) => `/api/v1/stacks/${id}/status`,
     },
     STATUS_CLASSES: {
         success: 'bg-green-50 text-green-700',
@@ -34,15 +35,15 @@ const setButtonState = (button, isLoading) => {
     textSpan.classList.toggle('opacity-0', isLoading);
 };
 
-// Create server card HTML
-const createServerCard = (stack, wan_ip) => {
+// Update the server card creation (wan_ip now comes from stack object)
+const createServerCard = (stack) => {
     const mcStatus = stack.services.minecraft_server;
     const sftpStatus = stack.services.sftp_server;
     
     return `
         <div class="bg-gray-50 rounded-lg p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div class="space-y-2">
-                <div class="font-semibold text-gray-800">Stack ${stack.stack_id} <span class="text-gray-500 text-sm ml-2">IP: ${wan_ip || 'Not available'}</span></div>
+                <div class="font-semibold text-gray-800">Stack ${stack.stack_id} <span class="text-gray-500 text-sm ml-2">IP: ${stack.wan_ip || 'Not available'}</span></div>
                 <div class="text-sm text-gray-600">
                     <div>Minecraft Server: ${mcStatus.status} ${mcStatus.port ? `(Port: ${mcStatus.port})` : ''}</div>
                     <div>SFTP Server: ${sftpStatus.status} ${sftpStatus.port ? `(Port: ${sftpStatus.port})` : ''}</div>
@@ -51,7 +52,7 @@ const createServerCard = (stack, wan_ip) => {
             <div class="flex gap-2 w-full sm:w-auto">
                 ${mcStatus.status === 'stopped' ? `
                     <button
-                        onclick="startStack(${stack.stack_id})"
+                        onclick="updateStackStatus(${stack.stack_id}, 'running')"
                         class="btn-action bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 flex-1 sm:flex-none"
                     >
                         <span class="btn-text">Start</span>
@@ -59,7 +60,7 @@ const createServerCard = (stack, wan_ip) => {
                     </button>
                 ` : `
                     <button
-                        onclick="stopStack(${stack.stack_id})"
+                        onclick="updateStackStatus(${stack.stack_id}, 'stopped')"
                         class="btn-action bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 flex-1 sm:flex-none"
                     >
                         <span class="btn-text">Stop</span>
@@ -78,32 +79,59 @@ const createServerCard = (stack, wan_ip) => {
     `;
 };
 
-// Update server list
-const updateServerList = (data) => {
+// Update server list function to handle new response structure
+const updateServerList = (stacks) => {
     const serverList = document.getElementById('serverList');
-    if (data.data.stacks.length === 0) {
+    if (!stacks || stacks.length === 0) {
         serverList.innerHTML = '<div class="text-gray-500 text-center py-8">No servers available</div>';
         return;
     }
-    serverList.innerHTML = data.data.stacks.map(stack => createServerCard(stack, data.data.wan_ip)).join('');
+    serverList.innerHTML = stacks.map(stack => createServerCard(stack, stack.wan_ip)).join('');
 };
 
-// API request handler
-async function executeRequest(url, method, buttonElement) {
+// Updated API request handler to handle new status codes and response structures
+async function executeRequest(url, method, buttonElement, body = null) {
     setButtonState(buttonElement, true);
 
     try {
-        const response = await fetch(url, { method });
-        const data = await response.json();
+        const options = {
+            method,
+            headers: {}
+        };
+
+        if (body) {
+            options.headers['Content-Type'] = 'application/json';
+            options.body = JSON.stringify(body);
+        }
+
+        const response = await fetch(url, options);
         
+        // Handle 204 No Content responses
+        if (response.status === 204) {
+            showStatus('Operation completed successfully', 'success');
+            if (method !== 'GET') {
+                refreshServerList();
+            }
+            return null;
+        }
+
+        // For responses with content
+        const isJson = response.headers.get('content-type')?.includes('application/json');
+        const data = isJson ? await response.json() : null;
+
         if (response.ok) {
-            showStatus(data.message, 'success');
+            // For successful GET with content or POST with created resource
+            if (method === 'POST') {
+                showStatus(`Stack ${data.stack_id} created successfully`, 'success');
+            }
             if (method !== 'GET') {
                 refreshServerList();
             }
             return data;
         } else {
-            showStatus(data.message, 'error');
+            // Error cases with message
+            const errorMessage = data?.message || 'An error occurred';
+            showStatus(errorMessage, 'error');
         }
     } catch (error) {
         showStatus('An error occurred while processing your request', 'error');
@@ -121,6 +149,7 @@ async function createStack() {
     );
 }
 
+// Update refresh server list to handle new response structure
 async function refreshServerList() {
     const data = await executeRequest(
         CONFIG.ENDPOINTS.LIST,
@@ -130,19 +159,12 @@ async function refreshServerList() {
     if (data) updateServerList(data);
 }
 
-async function startStack(id) {
+async function updateStackStatus(id, status) {
     await executeRequest(
-        CONFIG.ENDPOINTS.STACK(id),
-        'PUT',
-        document.querySelector(`button[onclick="startStack(${id})"]`)
-    );
-}
-
-async function stopStack(id) {
-    await executeRequest(
-        CONFIG.ENDPOINTS.STACK(id),
-        'POST',
-        document.querySelector(`button[onclick="stopStack(${id})"]`)
+        CONFIG.ENDPOINTS.STACK_STATUS(id),
+        'PATCH',
+        document.querySelector(`button[onclick="updateStackStatus(${id}, '${status}')"]`),
+        { status }
     );
 }
 

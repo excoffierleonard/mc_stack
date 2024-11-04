@@ -144,21 +144,15 @@ async fn list_stacks_impl() -> Result<HttpResponse, Error> {
         stacks.push(stack_id);
     }
 
+    if stacks.is_empty() {
+        return Ok(HttpResponse::NoContent().finish());
+    }
+
     // TODO: Hardcoded WAN IP for now or performance reasons, 
     // must find way to get it from the running dockers themselves to save some loading time,
     // currently it takes ~200ms to get the WAN IP by fetching it from the web,
     // objective is to get it under 20ms
     let wan_ip = "24.48.49.227".to_string();
-
-    if stacks.is_empty() {
-        return Ok(HttpResponse::Ok().json(json!({
-            "message": "Stack status retrieved successfully",
-            "data": {
-                "wan_ip": wan_ip,
-                "stacks": []
-            }
-        })));
-    }
 
     // Get running containers
     let containers = get_running_containers().await?;
@@ -180,6 +174,7 @@ async fn list_stacks_impl() -> Result<HttpResponse, Error> {
 
         json!({
             "stack_id": stack_id,
+            "wan_ip": wan_ip,
             "services": {
                 "sftp_server": {
                     "status": sftp_status.status,
@@ -193,16 +188,10 @@ async fn list_stacks_impl() -> Result<HttpResponse, Error> {
         })
     }).collect();
 
-    Ok(HttpResponse::Ok().json(json!({
-        "message": "Stack status retrieved successfully",
-        "data": {
-            "wan_ip": wan_ip,
-            "stacks": stack_statuses
-        }
-    })))
+    Ok(HttpResponse::Ok().json(stack_statuses))
 }
 
-#[get("/list")]
+#[get("/stacks")]
 pub async fn list_stacks() -> Result<HttpResponse, Error> {
     list_stacks_impl().await
 }

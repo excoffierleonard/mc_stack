@@ -31,7 +31,7 @@ impl fmt::Display for CreateStackError {
 impl ResponseError for CreateStackError {
     fn status_code(&self) -> actix_web::http::StatusCode {
         match self {
-            CreateStackError::ValidationError(_) => actix_web::http::StatusCode::BAD_REQUEST,
+            CreateStackError::ValidationError(_) => actix_web::http::StatusCode::FORBIDDEN,
             CreateStackError::FileSystemError(_) | CreateStackError::DockerError(_) => {
                 actix_web::http::StatusCode::INTERNAL_SERVER_ERROR
             }
@@ -181,20 +181,17 @@ async fn create_stack_impl() -> Result<HttpResponse, Error> {
         ))?;
     }
 
-    Ok(HttpResponse::Ok().json(json!({
-        "message": format!("Stack {} has been successfully created", new_stack_id),
-        "data": {
-            "stack_id": new_stack_id.to_string(),
-            "ports": {
-                "minecraft_server": new_server_port.to_string(),
-                "rcon": new_rcon_port.to_string(),
-                "sftp_server": new_sftp_port.to_string()
-            }
+    Ok(HttpResponse::Created().json(json!({
+        "stack_id": new_stack_id.to_string(),
+        "ports": {
+            "minecraft_server": new_server_port.to_string(),
+            "rcon": new_rcon_port.to_string(),
+            "sftp_server": new_sftp_port.to_string()
         }
     })))
 }
 
-#[post("/create")]
+#[post("/stacks")]
 pub async fn create_stack() -> Result<HttpResponse, Error> {
     create_stack_impl().await
 }
