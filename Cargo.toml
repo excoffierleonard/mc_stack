@@ -2,6 +2,8 @@
 name = "mc_stack"
 version = "0.1.0"
 edition = "2021"
+license = "AGPL-3.0-or-later"
+authors = ["Leonard Excoffier"]
 
 [dependencies]
 actix-web = "4"

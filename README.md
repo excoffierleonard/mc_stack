@@ -1,52 +1,102 @@
-# Minecraft Server Stack
+Based on your codebase, I'll create a comprehensive README.md:
 
-## Getting Started
+# Minecraft Server Stack Manager
+
+A robust, containerized Minecraft server management solution built with Rust and Docker. This service provides an intuitive web interface for creating and managing multiple Minecraft server instances, each with its own SFTP access and RCON capabilities.
+
+## 📚 Table of Content
+
+- [Features](#-features)
+- [Technical Stack](#️-technical-stack)
+- [Prerequisites](#-prerequisites)
+- [Quick Start](#-quick-start)
+- [Development](#-development)
+- [Configuration](#-configuration)
+- [API Documentation](#-api-documentation)
+- [Roadmap](#️-roadmap)
+- [Contributing](#-contributing)
+- [License](#-license)
+
+## 🚀 Features
+
+- **Multi-Server Management**: Create and manage multiple Minecraft server instances dynamically
+- **Container Isolation**: Each server runs in its own isolated Docker container
+- **Resource Control**: Automatic CPU-based scaling limits
+- **Web Interface**: Modern, responsive UI for server management
+- **Integrated Services**:
+  - 🎮 Minecraft Server
+  - 📁 SFTP Server for file access
+  - 🎛️ RCON support for remote commands
+- **Status Management**: Start, stop, and monitor server status
+- **Port Management**: Automatic port allocation and management
+
+## 🛠️ Technical Stack
+
+- **Backend**: Rust with Actix-web
+- **Frontend**: HTML/JavaScript with Tailwind CSS
+- **Containerization**: Docker with docker-compose
+- **Storage**: Docker volumes for persistence
+- **API**: RESTful JSON API
+
+## 📦 Prerequisites
+
+- Docker and Docker Compose
+- Rust 1 (for development)
+
+## ⚡ Quick Start
+
+Download the [compose.yaml](compose.yaml) file and start the service:
 
 ```bash
-git clone https://git.jisoonet.com/el/mc_stack.git && \
-cd mc_stack
+curl -o compose.yaml https://git.jisoonet.com/el/mc_stack/raw/branch/main/compose.yaml && docker compose up -d
 ```
 
-## Dev
+The web interface will be available at `http://localhost:8080`
 
+## 💻 Development
+
+Run the service locally:
 ```bash
 cargo run
 ```
 
-## Prod
-
-### Build and Run
-
+Build for production:
 ```bash
-cargo build --release && \
-pkill mc_stack && \
-nohup target/release/mc_stack &> output.log &
+cargo build --release
 ```
 
-### Stop
+## 🔧 Configuration
 
-```bash
-pkill mc_stack
-```
+- Service runs on `0.0.0.0:8080`
+- Requires Docker socket mounted at `/var/run/docker.sock`
+- Stack limits based on available CPU cores
+- Automatic port increment: 3 ports per stack (Minecraft, RCON, SFTP)
 
-### Docker
+## 📖 API Documentation
 
-```bash
-docker compose pull && \
-docker compose down && \
-docker compose up -d
-```
+Comprehensive API documentation is available in [docs/api.md](docs/api.md), including:
+- Stack creation and management
+- Status updates
+- Server listing
+- Error handling
 
-## Todo
+## 🗺️ Roadmap
 
-- Implement a backup mechanism using duplicacy
-- Migrate everything to rust, the static web files may be converted to webassembly
-- Directly using Docker Api to manage containers rather than installing docker cli, and maybe in the far future implement the container management system fully in rust (maybe not docker compose is usefull)
-- Use docker hashes as a better source of truth for listing container
-- List all containers and their status using docker ps rather than weird combination of listing the dirs etc...
-- Really do better introspection of the avaible docker commands. Maybe use the docker crate to do this
+- [ ] Backup system implementation using duplicacy
+- [ ] WebAssembly migration for web interface
+- [ ] Direct Docker API integration
+- [ ] Enhanced container status monitoring
+- [ ] Docker command introspection improvements
 
-## Notes
+## 🤝 Contributing
 
-- The service runs on `0.0.0.0:8080`
-- The docker container need to have the `docker.sock` mounted to `/var/run/docker.sock`
+We welcome contributions! Please feel free to submit Pull Requests.
+
+## 📝 License
+
+This project is licensed under the GNU AGPL-3.0 License - see the [LICENSE](LICENSE) file for details.
+
+**Commercial Use**: For commercial licensing options, please contact [Your Contact Info].
+
+---
+For detailed API usage and endpoints, see our [API Documentation](docs/api.md).
