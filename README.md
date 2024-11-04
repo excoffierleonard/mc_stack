@@ -1,5 +1,3 @@
-Based on your codebase, I'll create a comprehensive README.md:
-
 # Minecraft Server Stack Manager
 
 A robust, containerized Minecraft server management solution built with Rust and Docker. This service provides an intuitive web interface for creating and managing multiple Minecraft server instances, each with its own SFTP access and RCON capabilities.
