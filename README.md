@@ -5,13 +5,13 @@ A robust, containerized Minecraft server management solution built with Rust and
 ## 📚 Table of Content
 
 - [Features](#-features)
-- [Technical Stack](#️-technical-stack)
+- [Technical Stack](#-technical-stack)
 - [Prerequisites](#-prerequisites)
 - [Quick Start](#-quick-start)
 - [Development](#-development)
 - [Configuration](#-configuration)
 - [API Documentation](#-api-documentation)
-- [Roadmap](#️-roadmap)
+- [Roadmap](#-roadmap)
 - [Contributing](#-contributing)
 - [License](#-license)
 
