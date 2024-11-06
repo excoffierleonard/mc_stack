@@ -94,7 +94,7 @@ We welcome contributions! Please feel free to submit Pull Requests.
 
 This project is licensed under the GNU AGPL-3.0 License - see the [LICENSE](LICENSE) file for details.
 
-**Commercial Use**: For commercial licensing options, please contact [Your Contact Info].
+**Commercial Use**: For commercial licensing options, please contact Leonard Excoffier.
 
 ---
 For detailed API usage and endpoints, see our [API Documentation](docs/api.md).
