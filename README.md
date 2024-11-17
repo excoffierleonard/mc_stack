@@ -1,4 +1,4 @@
-# Minecraft Server Stack Manager
+# [Minecraft Server Stack Manager](mcstack.excoffierleonard.com)
 
 A robust, containerized Minecraft server management solution built with Rust and Docker. This service provides an intuitive web interface for creating and managing multiple Minecraft server instances, each with its own SFTP access and RCON capabilities.
 
@@ -46,7 +46,7 @@ A robust, containerized Minecraft server management solution built with Rust and
 Download the [compose.yaml](compose.yaml) file and start the service:
 
 ```bash
-curl -o compose.yaml https://git.jisoonet.com/el/mc_stack/raw/branch/main/compose.yaml && docker compose up -d
+curl -o compose.yaml https://github.com/excoffierleonard/mc_stack/raw/branch/main/compose.yaml && docker compose up -d
 ```
 
 The web interface will be available at `http://localhost:8080`
@@ -54,11 +54,13 @@ The web interface will be available at `http://localhost:8080`
 ## 💻 Development
 
 Run the service locally:
+
 ```bash
 cargo run
 ```
 
 Build for production:
+
 ```bash
 cargo build --release
 ```
@@ -73,6 +75,7 @@ cargo build --release
 ## 📖 API Documentation
 
 Comprehensive API documentation is available in [docs/api.md](docs/api.md), including:
+
 - Stack creation and management
 - Status updates
 - Server listing
@@ -97,4 +100,5 @@ This project is licensed under the GNU AGPL-3.0 License - see the [LICENSE](LICE
 **Commercial Use**: For commercial licensing options, please contact Leonard Excoffier.
 
 ---
+
 For detailed API usage and endpoints, see our [API Documentation](docs/api.md).
