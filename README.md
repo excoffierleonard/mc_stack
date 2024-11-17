@@ -1,5 +1,3 @@
-Based on your codebase, I'll create a comprehensive README.md:
-
 # [Minecraft Server Stack Manager](mcstack.excoffierleonard.com)
 
 A robust, containerized Minecraft server management solution built with Rust and Docker. This service provides an intuitive web interface for creating and managing multiple Minecraft server instances, each with its own SFTP access and RCON capabilities.
@@ -7,13 +5,13 @@ A robust, containerized Minecraft server management solution built with Rust and
 ## 📚 Table of Content
 
 - [Features](#-features)
-- [Technical Stack](#️-technical-stack)
+- [Technical Stack](#-technical-stack)
 - [Prerequisites](#-prerequisites)
 - [Quick Start](#-quick-start)
 - [Development](#-development)
 - [Configuration](#-configuration)
 - [API Documentation](#-api-documentation)
-- [Roadmap](#️-roadmap)
+- [Roadmap](#-roadmap)
 - [Contributing](#-contributing)
 - [License](#-license)
 
@@ -99,7 +97,7 @@ We welcome contributions! Please feel free to submit Pull Requests.
 
 This project is licensed under the GNU AGPL-3.0 License - see the [LICENSE](LICENSE) file for details.
 
-**Commercial Use**: For commercial licensing options, please contact [Your Contact Info].
+**Commercial Use**: For commercial licensing options, please contact Leonard Excoffier.
 
 ---
 
