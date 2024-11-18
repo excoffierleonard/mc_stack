@@ -1,6 +1,9 @@
 services:
   mc_stack:
-    image: git.jisoonet.com/el/mc_stack
+    build:
+      context: .
+      dockerfile: dockerfile
+    image: ghcr.io/excoffierleonard/mc_stack
     container_name: mc_stack
     ports:
       - "8080:8080"
