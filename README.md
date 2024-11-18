@@ -46,7 +46,7 @@ A robust, containerized Minecraft server management solution built with Rust and
 Download the [compose.yaml](compose.yaml) file and start the service:
 
 ```bash
-curl -o compose.yaml https://github.com/excoffierleonard/mc_stack/raw/branch/main/compose.yaml && docker compose up -d
+curl -o compose.yaml https://raw.githubusercontent.com/excoffierleonard/mc_stack/refs/heads/main/compose.yaml && docker compose up -d
 ```
 
 The web interface will be available at `http://localhost:8080`
