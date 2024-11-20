@@ -1,6 +1,6 @@
 services:
   minecraft_server:
-    image: git.jisoonet.com/el/minecraft_server
+    image: ghcr.io/excoffierleonard/minecraft_server
     container_name: ${MINECRAFT_SERVER_SERVICE:-minecraft_server}
     environment:
       JAVA_XMS: ${JAVA_XMS:-1024M}
@@ -16,7 +16,7 @@ services:
     restart: on-failure:5
 
   sftp_server:
-    image: git.jisoonet.com/el/sftp_server
+    image: ghcr.io/excoffierleonard/sftp_server
     container_name: ${SFTP_SERVER_SERVICE:-sftp_server}
     environment:
       SFTP_USER_PASSWORD: ${SFTP_USER_PASSWORD}
