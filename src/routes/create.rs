@@ -1,11 +1,11 @@
 use actix_web::{post, Error, HttpResponse, ResponseError};
-use serde_json::json;
-use std::path::PathBuf;
-use std::fmt;
-use tokio::process::Command;
-use regex::Regex;
 use num_cpus;
+use regex::Regex;
+use serde_json::json;
+use std::fmt;
 use std::fs;
+use std::path::PathBuf;
+use tokio::process::Command;
 
 const INCREMENT: i32 = 3;
 const ENV_TEMPLATE: &str = include_str!("../../template/.env");
@@ -58,7 +58,9 @@ fn parse_env_template() -> Result<EnvConfig, CreateStackError> {
             .lines()
             .find_map(|line| re.captures(line))
             .and_then(|cap| cap[1].parse().ok())
-            .ok_or_else(|| CreateStackError::ValidationError(format!("{} not found in env template", var_name)))
+            .ok_or_else(|| {
+                CreateStackError::ValidationError(format!("{} not found in env template", var_name))
+            })
     };
 
     Ok(EnvConfig {
@@ -69,17 +71,21 @@ fn parse_env_template() -> Result<EnvConfig, CreateStackError> {
 }
 
 async fn get_stacks_directory() -> Result<PathBuf, CreateStackError> {
-    let current_exe = std::env::current_exe()
-        .map_err(|e| CreateStackError::FileSystemError(format!("Failed to get current path: {}", e)))?;
-    
+    let current_exe = std::env::current_exe().map_err(|e| {
+        CreateStackError::FileSystemError(format!("Failed to get current path: {}", e))
+    })?;
+
     let stacks_dir = current_exe
         .parent()
-        .ok_or_else(|| CreateStackError::FileSystemError("Failed to find executable directory".to_string()))?
+        .ok_or_else(|| {
+            CreateStackError::FileSystemError("Failed to find executable directory".to_string())
+        })?
         .join("stacks");
 
     if !stacks_dir.exists() {
-        fs::create_dir_all(&stacks_dir)
-            .map_err(|e| CreateStackError::FileSystemError(format!("Failed to create stacks directory: {}", e)))?;
+        fs::create_dir_all(&stacks_dir).map_err(|e| {
+            CreateStackError::FileSystemError(format!("Failed to create stacks directory: {}", e))
+        })?;
     }
 
     Ok(stacks_dir)
@@ -91,25 +97,32 @@ async fn create_stack_impl() -> Result<HttpResponse, Error> {
     // Check maximum stacks limit
     let max_stacks = num_cpus::get();
     let stack_count = fs::read_dir(&stacks_dir)
-        .map_err(|e| CreateStackError::FileSystemError(format!("Failed to read stacks directory: {}", e)))?
+        .map_err(|e| {
+            CreateStackError::FileSystemError(format!("Failed to read stacks directory: {}", e))
+        })?
         .filter(|entry| {
-            entry.as_ref()
+            entry
+                .as_ref()
                 .map(|e| e.file_name().to_string_lossy().starts_with("stack_"))
                 .unwrap_or(false)
         })
         .count();
 
     if stack_count >= max_stacks {
-        return Err(CreateStackError::ValidationError(
-            format!("Maximum number of stacks ({}) reached", max_stacks)
-        ))?;
+        return Err(CreateStackError::ValidationError(format!(
+            "Maximum number of stacks ({}) reached",
+            max_stacks
+        )))?;
     }
 
     // Find highest existing stack number
     let mut highest_number = 0;
-    for entry in fs::read_dir(&stacks_dir)
-        .map_err(|e| CreateStackError::FileSystemError(format!("Failed to read stacks directory: {}", e)))? {
-        let entry = entry.map_err(|e| CreateStackError::FileSystemError(format!("Failed to read directory entry: {}", e)))?;
+    for entry in fs::read_dir(&stacks_dir).map_err(|e| {
+        CreateStackError::FileSystemError(format!("Failed to read stacks directory: {}", e))
+    })? {
+        let entry = entry.map_err(|e| {
+            CreateStackError::FileSystemError(format!("Failed to read directory entry: {}", e))
+        })?;
         if let Some(num_str) = entry.file_name().to_string_lossy().strip_prefix("stack_") {
             if let Ok(num) = num_str.parse::<i32>() {
                 highest_number = highest_number.max(num);
@@ -121,43 +134,54 @@ async fn create_stack_impl() -> Result<HttpResponse, Error> {
     let new_stack_dir = stacks_dir.join(format!("stack_{}", new_stack_id));
 
     let env_config = parse_env_template()?;
-    
+
     let new_server_port = env_config.server_port + new_stack_id * INCREMENT;
     let new_rcon_port = env_config.rcon_port + new_stack_id * INCREMENT;
     let new_sftp_port = env_config.sftp_port + new_stack_id * INCREMENT;
 
     // Create new stack directory
-    fs::create_dir_all(&new_stack_dir)
-        .map_err(|e| CreateStackError::FileSystemError(format!("Failed to create stack directory: {}", e)))?;
+    fs::create_dir_all(&new_stack_dir).map_err(|e| {
+        CreateStackError::FileSystemError(format!("Failed to create stack directory: {}", e))
+    })?;
 
     // Create env file with updated values
-    let new_content = ENV_TEMPLATE.lines().map(|line| {
-        if line.starts_with('#') || line.trim().is_empty() {
-            line.to_string()
-        } else {
-            match line.split('=').next() {
-                Some("SERVER_PORT") => format!("SERVER_PORT={}", new_server_port),
-                Some("RCON_PORT") => format!("RCON_PORT={}", new_rcon_port),
-                Some("SFTP_SERVER_PORT") => format!("SFTP_SERVER_PORT={}", new_sftp_port),
-                Some("MINECRAFT_SERVER_SERVICE") => 
-                    format!("MINECRAFT_SERVER_SERVICE=minecraft_server_{}", new_stack_id),
-                Some("MINECRAFT_SERVER_VOLUME") => 
-                    format!("MINECRAFT_SERVER_VOLUME=minecraft_server_{}", new_stack_id),
-                Some("MINECRAFT_SERVER_NETWORK") => 
-                    format!("MINECRAFT_SERVER_NETWORK=minecraft_server_{}", new_stack_id),
-                Some("SFTP_SERVER_SERVICE") => 
-                    format!("SFTP_SERVER_SERVICE=sftp_server_{}", new_stack_id),
-                _ => line.to_string()
+    let new_content = ENV_TEMPLATE
+        .lines()
+        .map(|line| {
+            if line.starts_with('#') || line.trim().is_empty() {
+                line.to_string()
+            } else {
+                match line.split('=').next() {
+                    Some("SERVER_PORT") => format!("SERVER_PORT={}", new_server_port),
+                    Some("RCON_PORT") => format!("RCON_PORT={}", new_rcon_port),
+                    Some("SFTP_SERVER_PORT") => format!("SFTP_SERVER_PORT={}", new_sftp_port),
+                    Some("MINECRAFT_SERVER_SERVICE") => {
+                        format!("MINECRAFT_SERVER_SERVICE=minecraft_server_{}", new_stack_id)
+                    }
+                    Some("MINECRAFT_SERVER_VOLUME") => {
+                        format!("MINECRAFT_SERVER_VOLUME=minecraft_server_{}", new_stack_id)
+                    }
+                    Some("MINECRAFT_SERVER_NETWORK") => {
+                        format!("MINECRAFT_SERVER_NETWORK=minecraft_server_{}", new_stack_id)
+                    }
+                    Some("SFTP_SERVER_SERVICE") => {
+                        format!("SFTP_SERVER_SERVICE=sftp_server_{}", new_stack_id)
+                    }
+                    _ => line.to_string(),
+                }
             }
-        }
-    }).collect::<Vec<String>>().join("\n");
+        })
+        .collect::<Vec<String>>()
+        .join("\n");
 
     // Write files
-    fs::write(new_stack_dir.join(".env"), new_content)
-        .map_err(|e| CreateStackError::FileSystemError(format!("Failed to write .env file: {}", e)))?;
-    
-    fs::write(new_stack_dir.join("compose.yaml"), COMPOSE_TEMPLATE)
-        .map_err(|e| CreateStackError::FileSystemError(format!("Failed to write compose.yaml: {}", e)))?;
+    fs::write(new_stack_dir.join(".env"), new_content).map_err(|e| {
+        CreateStackError::FileSystemError(format!("Failed to write .env file: {}", e))
+    })?;
+
+    fs::write(new_stack_dir.join("compose.yaml"), COMPOSE_TEMPLATE).map_err(|e| {
+        CreateStackError::FileSystemError(format!("Failed to write compose.yaml: {}", e))
+    })?;
 
     // Start the containers
     let output = Command::new("docker")
@@ -166,18 +190,21 @@ async fn create_stack_impl() -> Result<HttpResponse, Error> {
             "-f",
             new_stack_dir.join("compose.yaml").to_str().unwrap(),
             "up",
-            "-d"
+            "-d",
         ])
         .output()
         .await
-        .map_err(|e| CreateStackError::DockerError(format!("Failed to execute docker compose: {}", e)))?;
+        .map_err(|e| {
+            CreateStackError::DockerError(format!("Failed to execute docker compose: {}", e))
+        })?;
 
     if !output.status.success() {
-        fs::remove_dir_all(&new_stack_dir)
-            .map_err(|e| CreateStackError::FileSystemError(format!("Failed to cleanup failed stack: {}", e)))?;
-        
+        fs::remove_dir_all(&new_stack_dir).map_err(|e| {
+            CreateStackError::FileSystemError(format!("Failed to cleanup failed stack: {}", e))
+        })?;
+
         return Err(CreateStackError::DockerError(
-            "Failed to start containers. Stack creation rolled back".to_string()
+            "Failed to start containers. Stack creation rolled back".to_string(),
         ))?;
     }
 
