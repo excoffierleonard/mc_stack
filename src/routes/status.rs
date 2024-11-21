@@ -17,7 +17,8 @@ pub enum StackStatus {
 }
 
 #[derive(Debug)]
-pub enum StackError {  // Made public
+pub enum StackError {
+    // Made public
     StackNotFound(String),
     DockerError(String),
     InvalidStatus(String),
@@ -30,9 +31,10 @@ impl TryFrom<String> for StackStatus {
         match status.to_lowercase().as_str() {
             "running" => Ok(StackStatus::Running),
             "stopped" => Ok(StackStatus::Stopped),
-            _ => Err(StackError::InvalidStatus(
-                format!("Invalid status value: '{}'. Must be 'running' or 'stopped'", status)
-            )),
+            _ => Err(StackError::InvalidStatus(format!(
+                "Invalid status value: '{}'. Must be 'running' or 'stopped'",
+                status
+            ))),
         }
     }
 }
@@ -66,7 +68,7 @@ impl ResponseError for StackError {
 async fn get_compose_file_path(stack_id: &str) -> Result<PathBuf, StackError> {
     let current_exe = std::env::current_exe()
         .map_err(|e| StackError::DockerError(format!("Failed to get current path: {}", e)))?;
-    
+
     let stack_dir = current_exe
         .parent()
         .ok_or_else(|| StackError::DockerError("Failed to find executable directory".to_string()))?
@@ -75,9 +77,10 @@ async fn get_compose_file_path(stack_id: &str) -> Result<PathBuf, StackError> {
         .join("compose.yaml");
 
     if !stack_dir.exists() {
-        return Err(StackError::StackNotFound(
-            format!("Stack {} does not exist", stack_id)
-        ));
+        return Err(StackError::StackNotFound(format!(
+            "Stack {} does not exist",
+            stack_id
+        )));
     }
 
     Ok(stack_dir)
@@ -89,9 +92,9 @@ async fn update_stack_status_impl(
 ) -> Result<HttpResponse, Error> {
     // Convert and validate status
     let status = StackStatus::try_from(status_update.status)?;
-    
+
     let compose_file = get_compose_file_path(&stack_id).await?;
-    
+
     let docker_command = match status {
         StackStatus::Running => vec!["up", "-d"],
         StackStatus::Stopped => vec!["down"],
@@ -104,15 +107,14 @@ async fn update_stack_status_impl(
     let output = cmd
         .output()
         .await
-        .map_err(|e| StackError::DockerError(
-            format!("Failed to execute docker compose: {}", e)
-        ))?;
+        .map_err(|e| StackError::DockerError(format!("Failed to execute docker compose: {}", e)))?;
 
     if !output.status.success() {
         let error_msg = String::from_utf8_lossy(&output.stderr);
-        return Err(StackError::DockerError(
-            format!("Failed to update stack {} status: {}", stack_id, error_msg)
-        ))?;
+        return Err(StackError::DockerError(format!(
+            "Failed to update stack {} status: {}",
+            stack_id, error_msg
+        )))?;
     }
 
     Ok(HttpResponse::NoContent().finish())
