@@ -18,7 +18,6 @@ use actix_web::{
     web, App, HttpServer,
 };
 use env_logger::Env;
-use num_cpus;
 
 mod routes;
 mod website;

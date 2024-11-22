@@ -1,5 +1,4 @@
 use actix_web::{web, HttpResponse, Result};
-use mime_guess;
 use rust_embed::RustEmbed;
 
 #[derive(RustEmbed)]

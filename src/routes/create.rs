@@ -13,15 +13,15 @@ const COMPOSE_TEMPLATE: &str = include_str!("../../template/compose.yaml");
 
 #[derive(Debug)]
 enum CreateStackError {
-    ValidationError(String),
-    FileSystemError(String),
-    DockerError(String),
+    Validation(String),
+    FileSystem(String),
+    Docker(String),
 }
 
 impl fmt::Display for CreateStackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::ValidationError(msg) | Self::FileSystemError(msg) | Self::DockerError(msg) => {
+            Self::Validation(msg) | Self::FileSystem(msg) | Self::Docker(msg) => {
                 write!(f, "{}", msg)
             }
         }
@@ -31,8 +31,8 @@ impl fmt::Display for CreateStackError {
 impl ResponseError for CreateStackError {
     fn status_code(&self) -> actix_web::http::StatusCode {
         match self {
-            CreateStackError::ValidationError(_) => actix_web::http::StatusCode::FORBIDDEN,
-            CreateStackError::FileSystemError(_) | CreateStackError::DockerError(_) => {
+            CreateStackError::Validation(_) => actix_web::http::StatusCode::FORBIDDEN,
+            CreateStackError::FileSystem(_) | CreateStackError::Docker(_) => {
                 actix_web::http::StatusCode::INTERNAL_SERVER_ERROR
             }
         }
@@ -59,7 +59,7 @@ fn parse_env_template() -> Result<EnvConfig, CreateStackError> {
             .find_map(|line| re.captures(line))
             .and_then(|cap| cap[1].parse().ok())
             .ok_or_else(|| {
-                CreateStackError::ValidationError(format!("{} not found in env template", var_name))
+                CreateStackError::Validation(format!("{} not found in env template", var_name))
             })
     };
 
@@ -71,20 +71,19 @@ fn parse_env_template() -> Result<EnvConfig, CreateStackError> {
 }
 
 async fn get_stacks_directory() -> Result<PathBuf, CreateStackError> {
-    let current_exe = std::env::current_exe().map_err(|e| {
-        CreateStackError::FileSystemError(format!("Failed to get current path: {}", e))
-    })?;
+    let current_exe = std::env::current_exe()
+        .map_err(|e| CreateStackError::FileSystem(format!("Failed to get current path: {}", e)))?;
 
     let stacks_dir = current_exe
         .parent()
         .ok_or_else(|| {
-            CreateStackError::FileSystemError("Failed to find executable directory".to_string())
+            CreateStackError::FileSystem("Failed to find executable directory".to_string())
         })?
         .join("stacks");
 
     if !stacks_dir.exists() {
         fs::create_dir_all(&stacks_dir).map_err(|e| {
-            CreateStackError::FileSystemError(format!("Failed to create stacks directory: {}", e))
+            CreateStackError::FileSystem(format!("Failed to create stacks directory: {}", e))
         })?;
     }
 
@@ -98,7 +97,7 @@ async fn create_stack_impl() -> Result<HttpResponse, Error> {
     let max_stacks = num_cpus::get();
     let stack_count = fs::read_dir(&stacks_dir)
         .map_err(|e| {
-            CreateStackError::FileSystemError(format!("Failed to read stacks directory: {}", e))
+            CreateStackError::FileSystem(format!("Failed to read stacks directory: {}", e))
         })?
         .filter(|entry| {
             entry
@@ -109,7 +108,7 @@ async fn create_stack_impl() -> Result<HttpResponse, Error> {
         .count();
 
     if stack_count >= max_stacks {
-        return Err(CreateStackError::ValidationError(format!(
+        return Err(CreateStackError::Validation(format!(
             "Maximum number of stacks ({}) reached",
             max_stacks
         )))?;
@@ -118,10 +117,10 @@ async fn create_stack_impl() -> Result<HttpResponse, Error> {
     // Find highest existing stack number
     let mut highest_number = 0;
     for entry in fs::read_dir(&stacks_dir).map_err(|e| {
-        CreateStackError::FileSystemError(format!("Failed to read stacks directory: {}", e))
+        CreateStackError::FileSystem(format!("Failed to read stacks directory: {}", e))
     })? {
         let entry = entry.map_err(|e| {
-            CreateStackError::FileSystemError(format!("Failed to read directory entry: {}", e))
+            CreateStackError::FileSystem(format!("Failed to read directory entry: {}", e))
         })?;
         if let Some(num_str) = entry.file_name().to_string_lossy().strip_prefix("stack_") {
             if let Ok(num) = num_str.parse::<i32>() {
@@ -141,7 +140,7 @@ async fn create_stack_impl() -> Result<HttpResponse, Error> {
 
     // Create new stack directory
     fs::create_dir_all(&new_stack_dir).map_err(|e| {
-        CreateStackError::FileSystemError(format!("Failed to create stack directory: {}", e))
+        CreateStackError::FileSystem(format!("Failed to create stack directory: {}", e))
     })?;
 
     // Create env file with updated values
@@ -175,12 +174,11 @@ async fn create_stack_impl() -> Result<HttpResponse, Error> {
         .join("\n");
 
     // Write files
-    fs::write(new_stack_dir.join(".env"), new_content).map_err(|e| {
-        CreateStackError::FileSystemError(format!("Failed to write .env file: {}", e))
-    })?;
+    fs::write(new_stack_dir.join(".env"), new_content)
+        .map_err(|e| CreateStackError::FileSystem(format!("Failed to write .env file: {}", e)))?;
 
     fs::write(new_stack_dir.join("compose.yaml"), COMPOSE_TEMPLATE).map_err(|e| {
-        CreateStackError::FileSystemError(format!("Failed to write compose.yaml: {}", e))
+        CreateStackError::FileSystem(format!("Failed to write compose.yaml: {}", e))
     })?;
 
     // Start the containers
@@ -195,15 +193,15 @@ async fn create_stack_impl() -> Result<HttpResponse, Error> {
         .output()
         .await
         .map_err(|e| {
-            CreateStackError::DockerError(format!("Failed to execute docker compose: {}", e))
+            CreateStackError::Docker(format!("Failed to execute docker compose: {}", e))
         })?;
 
     if !output.status.success() {
         fs::remove_dir_all(&new_stack_dir).map_err(|e| {
-            CreateStackError::FileSystemError(format!("Failed to cleanup failed stack: {}", e))
+            CreateStackError::FileSystem(format!("Failed to cleanup failed stack: {}", e))
         })?;
 
-        return Err(CreateStackError::DockerError(
+        return Err(CreateStackError::Docker(
             "Failed to start containers. Stack creation rolled back".to_string(),
         ))?;
     }
